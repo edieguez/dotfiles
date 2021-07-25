@@ -1,0 +1,58 @@
+DisplayPort-0 Window-Maximized 1920x1080=true
+MenuBar=Disabled
+
+[CompactMode]
+FontWeight=50
+
+[ContextMenu]
+ShowViewMode=false
+
+[Desktop Entry]
+DefaultProfile=Breath2.profile
+
+[DetailsMode]
+FontWeight=50
+PreviewSize=16
+
+[General]
+RememberOpenedTabs=false
+ShowFullPathInTitlebar=true
+ShowZoomSlider=false
+Version=200
+ViewPropsTimestamp=2021,7,20,17,40,8.738
+
+[IconsMode]
+FontWeight=50
+
+[KPropertiesDialog]
+DisplayPort-0 Height 1920x1080=458
+DisplayPort-0 Width 1920x1080=393
+
+[MainWindow]
+DisplayPort-0 Height 1920x1080=437
+DisplayPort-0 Width 1920x1080=866
+DisplayPort-0 XPosition 1920x1080=0
+DisplayPort-0 YPosition 1920x1080=54
+MenuBar=Disabled
+RestorePositionForNextInstance=false
+State=AAAA/wAAAAD9AAAAAwAAAAAAAAC4AAABlvwCAAAAAvsAAAAWAGYAbwBsAGQAZQByAHMARABvAGMAawAAAAAuAAAAywAAAAoBAAAD+wAAABQAcABsAGEAYwBlAHMARABvAGMAawAAAAAuAAABlgAAAAoBAAADAAAAAQAAALgAAAGW/AIAAAAB+wAAABAAaQBuAGYAbwBEAG8AYwBrAAAAAC4AAAGWAAAACgEAAAMAAAADAAADRgAAAIb8AQAAAAH7AAAAGAB0AGUAcgBtAGkAbgBhAGwARABvAGMAawAAAAAAAAADRgAAAAoBAAADAAADYgAAAYcAAAAEAAAABAAAAAgAAAAI/AAAAAEAAAACAAAAAQAAABYAbQBhAGkAbgBUAG8AbwBsAEIAYQByAQAAAAD/////AAAAAAAAAAA=
+ToolBarsMovable=Disabled
+
+[MainWindow][Toolbar mainToolBar]
+IconSize=16
+ToolButtonStyle=IconOnly
+
+[Open-with settings]
+CompletionMode=1
+History=code
+
+[PreviewSettings]
+Plugins=
+
+[SettingsDialog]
+DisplayPort-0 Height 1920x1080=440
+DisplayPort-0 Width 1920x1080=589
+
+[Toolbar mainToolBar]
+IconSize=16
+ToolButtonStyle=IconOnly
