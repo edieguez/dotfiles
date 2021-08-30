@@ -9,14 +9,21 @@ Id_1=fa215a17-bfa0-4c8f-ae67-207cc8d79a65
 Number=1
 Rows=1
 
+[Effect-PresentWindows]
+DrawWindowCaptions=false
+DrawWindowIcons=false
+
 [Plugins]
 kwin4_effect_loginEnabled=false
 kwin4_effect_logoutEnabled=false
 kwin4_effect_squashEnabled=false
 magiclampEnabled=true
+mousemarkEnabled=true
 
 [TabBox]
+ActivitiesMode=0
 BorderActivate=9
+DesktopMode=0
 HighlightWindows=false
 LayoutName=big_icons
 
