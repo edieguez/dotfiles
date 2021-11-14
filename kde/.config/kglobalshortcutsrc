@@ -275,7 +275,7 @@ show-on-mouse-pos=none,Meta+V,Open Klipper at Mouse Position
 stop current activity=none,Meta+S,Stop Current Activity
 switch to next activity=none,none,Switch to Next Activity
 switch to previous activity=none,none,Switch to Previous Activity
-toggle do not disturb=none,none,Toggle do not disturb
+toggle do not disturb=Meta+Space,none,Toggle do not disturb
 
 [systemsettings.desktop]
 _k_friendly_name=System Settings
