@@ -1135,6 +1135,9 @@ Key=Launch (D)
 Type=SHORTCUT
 Uuid={b3f3e99e-d62c-499b-b0da-db5a0e5a5481}
 
+[DirSelect Dialog]
+DirSelectDialog Size[$d]
+
 [Directories]
 dir_pixmap[$d]
 
