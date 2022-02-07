@@ -619,7 +619,7 @@ Uuid={9e6c8a78-1957-4b0c-892f-fa4acdb00c54}
 [Data_3]
 Comment=Basic Konqueror gestures.
 DataCount=14
-Enabled=true
+Enabled=false
 ImportId=konqueror_gestures_kde321
 Name=Konqueror Gestures
 SystemGroup=0
