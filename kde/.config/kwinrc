@@ -13,6 +13,7 @@ Rows=1
 [Effect-PresentWindows]
 DrawWindowCaptions=false
 DrawWindowIcons=false
+LayoutMode=1
 
 [NightColor]
 Active=true
