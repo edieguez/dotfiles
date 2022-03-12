@@ -1,5 +1,6 @@
 [ActivityManager]
 _k_friendly_name=Activity Manager
+switch-to-activity-54959788-c2d6-4ab0-9009-f9f5c9e30eae=none,none,Switch to activity "Default"
 switch-to-activity-7568899c-9118-4131-b932-880d9e8f189c=none,none,Switch to activity "Default"
 
 [KDE Keyboard Layout Switcher]
@@ -132,14 +133,15 @@ Window Above Other Windows=none,,Keep Window Above Others
 Window Below Other Windows=none,,Keep Window Below Others
 Window Close=Alt+F4,Alt+F4,Close Window
 Window Fullscreen=none,,Make Window Fullscreen
-Window Grow Horizontal=none,,Pack Grow Window Horizontally
-Window Grow Vertical=none,,Pack Grow Window Vertically
+Window Grow Horizontal=none,,Expand Window Horizontally
+Window Grow Vertical=none,,Expand Window Vertically
 Window Lower=none,,Lower Window
 Window Maximize=Meta+Up,Meta+PgUp,Maximize Window
 Window Maximize Horizontal=none,,Maximize Window Horizontally
 Window Maximize Vertical=none,,Maximize Window Vertically
 Window Minimize=Meta+Down,Meta+PgDown,Minimize Window
 Window Move=none,,Move Window
+Window Move Center=none,,Move Window to the Center
 Window No Border=none,,Hide Window Border
 Window On All Desktops=none,,Keep Window on All Desktops
 Window One Desktop Down=none,Meta+Ctrl+Shift+Down,Window One Desktop Down
@@ -147,10 +149,10 @@ Window One Desktop Up=none,Meta+Ctrl+Shift+Up,Window One Desktop Up
 Window One Desktop to the Left=none,Meta+Ctrl+Shift+Left,Window One Desktop to the Left
 Window One Desktop to the Right=none,Meta+Ctrl+Shift+Right,Window One Desktop to the Right
 Window Operations Menu=Alt+Space,Alt+F3,Window Operations Menu
-Window Pack Down=none,,Pack Window Down
-Window Pack Left=none,,Pack Window to the Left
-Window Pack Right=none,,Pack Window to the Right
-Window Pack Up=none,,Pack Window Up
+Window Pack Down=none,,Move Window Down
+Window Pack Left=none,,Move Window Left
+Window Pack Right=none,,Move Window Right
+Window Pack Up=none,,Move Window Up
 Window Quick Tile Bottom=none,Meta+Down,Quick Tile Window to the Bottom
 Window Quick Tile Bottom Left=Meta+Alt+Left,,Quick Tile Window to the Bottom Left
 Window Quick Tile Bottom Right=Meta+Alt+Down,,Quick Tile Window to the Bottom Right
@@ -162,8 +164,8 @@ Window Quick Tile Top Right=Meta+Alt+Right,,Quick Tile Window to the Top Right
 Window Raise=none,,Raise Window
 Window Resize=none,,Resize Window
 Window Shade=none,,Shade Window
-Window Shrink Horizontal=none,,Pack Shrink Window Horizontally
-Window Shrink Vertical=none,,Pack Shrink Window Vertically
+Window Shrink Horizontal=none,,Shrink Window Horizontally
+Window Shrink Vertical=none,,Shrink Window Vertically
 Window to Desktop 1=none,,Window to Desktop 1
 Window to Desktop 10=none,,Window to Desktop 10
 Window to Desktop 11=none,,Window to Desktop 11
@@ -249,7 +251,7 @@ Turn Off Screen=none,none,Turn Off Screen
 _k_friendly_name=Power Management
 
 [plasmashell]
-_k_friendly_name=Plasma
+_k_friendly_name=Activity switching
 activate task manager entry 1=none,Meta+1,Activate Task Manager Entry 1
 activate task manager entry 10=none,Meta+0,Activate Task Manager Entry 10
 activate task manager entry 2=none,Meta+2,Activate Task Manager Entry 2
@@ -260,6 +262,7 @@ activate task manager entry 6=none,Meta+6,Activate Task Manager Entry 6
 activate task manager entry 7=none,Meta+7,Activate Task Manager Entry 7
 activate task manager entry 8=none,Meta+8,Activate Task Manager Entry 8
 activate task manager entry 9=none,Meta+9,Activate Task Manager Entry 9
+activate widget 3=Alt+F1,none,Activate Application Launcher Widget
 activate widget 32=none,none,Activate Application Menu Widget
 activate widget 45=Meta+Esc,none,Activate Fokus Widget
 clear-history=none,,Clear Clipboard History
