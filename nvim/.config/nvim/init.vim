@@ -10,6 +10,7 @@ call plug#begin('~/.vim/plugged')
   Plug 'jiangmiao/auto-pairs'
   Plug 'tpope/vim-surround'
   Plug 'github/copilot.vim'
+  Plug 'ms-jpq/chadtree', {'branch': 'chad', 'do': 'python3 -m chadtree deps'}
 call plug#end()
 
 augroup numbertoggle
@@ -18,4 +19,5 @@ augroup numbertoggle
   autocmd BufLeave,FocusLost,InsertEnter,WinLeave   * if &nu                  | set nornu | endif
 augroup END
 
-nnoremap <F9> :!%:p<Enter>
+nnoremap <F9> :w<Enter>:! %:p<Enter>
+nnoremap <F10> :CHADopen<Enter>
