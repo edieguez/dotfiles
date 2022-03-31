@@ -10,9 +10,9 @@ set number
 
 call plug#begin('~/.vim/plugged')
   Plug 'jiangmiao/auto-pairs'
-  Plug 'tpope/vim-surround'
-  Plug 'github/copilot.vim'
   Plug 'ms-jpq/chadtree', {'branch': 'chad', 'do': 'python3 -m chadtree deps'}
+  Plug 'github/copilot.vim'
+  Plug 'tpope/vim-surround'
 call plug#end()
 
 augroup numbertoggle
@@ -21,6 +21,26 @@ augroup numbertoggle
   autocmd BufLeave,FocusLost,InsertEnter,WinLeave   * if &nu                  | set nornu | endif
 augroup END
 
-nnoremap <F22>     :w<Enter>:! %:p<Enter>
+" Reload VIM configuration
+nnoremap <Leader>sv :so $MYVIMRC<Enter>
+nnoremap <leader>ev :e $MYVIMRC<Enter>
+
+" Run current file
+nnoremap <F22> :w<Enter>:! %:p<Enter>
+inoremap <F22> <Esc>:w<Enter>:! %:p<Enter>
+
+" Save current file
+nnoremap <C-S> :w<Enter>
+inoremap <C-S> <Esc>:w<Enter>a
+
+" Undo last change. Use <C-R> to redo
+nnoremap <C-Z> u
+inoremap <C-Z> <Esc>u
+
+" New line
+nnoremap <Leader><Enter> o
+inoremap <Leader><Enter> <Esc>o
+
+" IDE like mappings
 nnoremap <Leader>1 :CHADopen<Enter>
-nnoremap <C-E>     :buffers<CR>:buffer<Space>
+nnoremap <C-E> :buffers<CR>:buffer<Space>
