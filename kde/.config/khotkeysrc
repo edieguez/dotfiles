@@ -1131,7 +1131,7 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_4_4Triggers0]
-Key=Launch (D)
+Key=Meta+F4
 Type=SHORTCUT
 Uuid={b3f3e99e-d62c-499b-b0da-db5a0e5a5481}
 

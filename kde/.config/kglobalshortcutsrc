@@ -1,5 +1,6 @@
 [ActivityManager]
 _k_friendly_name=Activity Manager
+switch-to-activity-030d1d4b-2dfe-4e81-b56e-a36d44c2d265=none,none,Switch to activity "Default"
 switch-to-activity-54959788-c2d6-4ab0-9009-f9f5c9e30eae=none,none,Switch to activity "Default"
 switch-to-activity-7568899c-9118-4131-b932-880d9e8f189c=none,none,Switch to activity "Default"
 
@@ -29,7 +30,7 @@ _k_friendly_name=Custom Shortcuts Service
 {7941d8b2-9883-4703-ac7f-afc59c5b8008}=Meta+C,none,Brave
 {8e51bca2-b20e-46a3-864b-87ff91237fab}=Ctrl+Shift+Esc,none,Ksysguard
 {a0c03d8c-4df6-4269-aa29-3a7ad0c16b85}=Launch (C),none,Turn off screen
-{b3f3e99e-d62c-499b-b0da-db5a0e5a5481}=Launch (D),none,Toggle bluetooth
+{b3f3e99e-d62c-499b-b0da-db5a0e5a5481}=Meta+F4,none,Toggle bluetooth
 {d03619b6-9b3c-48cc-9d9c-a2aadb485550}=none,none,Search
 
 [kmix]
@@ -262,7 +263,7 @@ activate task manager entry 6=none,Meta+6,Activate Task Manager Entry 6
 activate task manager entry 7=none,Meta+7,Activate Task Manager Entry 7
 activate task manager entry 8=none,Meta+8,Activate Task Manager Entry 8
 activate task manager entry 9=none,Meta+9,Activate Task Manager Entry 9
-activate widget 3=Alt+F1,none,Activate Application Launcher Widget
+activate widget 28=Alt+F1,none,Activate Application Menu Widget
 activate widget 32=none,none,Activate Application Menu Widget
 activate widget 45=Meta+Esc,none,Activate Fokus Widget
 clear-history=none,,Clear Clipboard History
