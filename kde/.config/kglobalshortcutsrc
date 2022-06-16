@@ -29,7 +29,7 @@ _k_friendly_name=Custom Shortcuts Service
 {459d0d4b-c3d1-4eb4-909f-09ffa1588270}=Ctrl+Alt+T,none,Launch Konsole
 {7941d8b2-9883-4703-ac7f-afc59c5b8008}=Meta+C,none,Brave
 {8e51bca2-b20e-46a3-864b-87ff91237fab}=Ctrl+Shift+Esc,none,Ksysguard
-{a0c03d8c-4df6-4269-aa29-3a7ad0c16b85}=Launch (C),none,Turn off screen
+{a0c03d8c-4df6-4269-aa29-3a7ad0c16b85}=Meta+Esc,none,Turn off screen
 {b3f3e99e-d62c-499b-b0da-db5a0e5a5481}=Meta+F4,none,Toggle bluetooth
 {d03619b6-9b3c-48cc-9d9c-a2aadb485550}=none,none,Search
 

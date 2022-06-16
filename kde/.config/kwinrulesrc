@@ -1,2 +1,22 @@
 [$Version]
 update_info=kwinrules.upd:replace-placement-string-to-enum,kwinrules.upd:use-virtual-desktop-ids
+
+[1]
+Description=Borderless windows
+noborder=true
+noborderrule=2
+types=66207
+wmclass=*
+wmclasscomplete=true
+
+[General]
+count=1
+rules=1
+
+[c51dbe42-ce13-4e87-8096-cd5dc358deda]
+Description=Borderless windows
+noborder=true
+noborderrule=2
+types=66207
+wmclass=*
+wmclasscomplete=true

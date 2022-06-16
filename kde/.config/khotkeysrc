@@ -1079,7 +1079,7 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_4_2Triggers0]
-Key=Launch (C)
+Key=Meta+Esc
 Type=SHORTCUT
 Uuid={a0c03d8c-4df6-4269-aa29-3a7ad0c16b85}
 
