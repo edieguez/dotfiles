@@ -33,6 +33,9 @@ inoremap <F22> <Esc>:w<Enter>:! %:p<Enter>
 nnoremap <C-S> :w<Enter>
 inoremap <C-S> <Esc>:w<Enter>a
 
+nnoremap <C-Q> :wq<Enter>
+inoremap <C-Q> <Esc>:wq<Enter>
+
 " Undo last change. Use <C-R> to redo
 nnoremap <C-Z> u
 inoremap <C-Z> <Esc>u
