@@ -13,6 +13,7 @@ call plug#begin('~/.vim/plugged')
   Plug 'ms-jpq/chadtree', {'branch': 'chad', 'do': 'python3 -m chadtree deps'}
   Plug 'github/copilot.vim'
   Plug 'tpope/vim-surround'
+  Plug 'luochen1990/rainbow'
 call plug#end()
 
 augroup numbertoggle
@@ -20,6 +21,8 @@ augroup numbertoggle
   autocmd BufEnter,FocusGained,InsertLeave,WinEnter * if &nu && mode() != "i" | set rnu   | endif
   autocmd BufLeave,FocusLost,InsertEnter,WinLeave   * if &nu                  | set nornu | endif
 augroup END
+
+let g:rainbow_active = 1
 
 " Reload VIM configuration
 nnoremap <Leader>rv :so $MYVIMRC<Enter>
