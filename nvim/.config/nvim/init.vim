@@ -1,6 +1,6 @@
 filetype plugin indent on
 
-let mapleader=" "
+let mapleader=","
 
 set background=dark
 set cindent
@@ -22,10 +22,11 @@ augroup numbertoggle
 augroup END
 
 " Reload VIM configuration
-nnoremap <Leader>sv :so $MYVIMRC<Enter>
+nnoremap <Leader>rv :so $MYVIMRC<Enter>
 nnoremap <leader>ev :e $MYVIMRC<Enter>
 
 " Run current file
+nnoremap  :w<Enter>:! %:p<Enter>
 nnoremap <F22> :w<Enter>:! %:p<Enter>
 inoremap <F22> <Esc>:w<Enter>:! %:p<Enter>
 
