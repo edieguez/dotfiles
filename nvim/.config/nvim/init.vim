@@ -3,9 +3,8 @@ filetype plugin indent on
 let mapleader=","
 
 set background=dark
-set cindent
 set expandtab ts=4 sw=4 ai
-set listchars=eol:¬,tab:>·,trail:~,extends:>,precedes:<,space:␣
+set listchars=eol:¬,tab:»·,trail:␣,extends:>,precedes:<,space:·
 set number
 
 call plug#begin('~/.vim/plugged')
