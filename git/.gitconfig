@@ -3,3 +3,5 @@
     name = edieguez
 [credential]
 	helper = store
+[pull]
+	rebase = true
