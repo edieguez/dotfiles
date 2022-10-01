@@ -28,9 +28,8 @@ nnoremap <Leader>rv :so $MYVIMRC<Enter>
 nnoremap <leader>ev :e $MYVIMRC<Enter>
 
 " Run current file
-nnoremap  :w<Enter>:! %:p<Enter>
-nnoremap <F22> :w<Enter>:! %:p<Enter>
-inoremap <F22> <Esc>:w<Enter>:! %:p<Enter>
+nnoremap <F5> :w<Enter>:! %:p<Enter>
+inoremap <F5> <Esc>:w<Enter>:! %:p<Enter>
 
 " Save current file
 nnoremap <C-S> :w<Enter>
