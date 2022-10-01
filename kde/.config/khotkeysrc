@@ -1119,7 +1119,7 @@ Type=SIMPLE_ACTION_DATA
 ActionsCount=1
 
 [Data_4_4Actions0]
-CommandURL=/home/emmanuel/.zsh-config/bin/bt_toggle.sh
+CommandURL=/home/emmanuel/.zsh/zsh-config/bin/bt_toggle.sh
 Type=COMMAND_URL
 
 [Data_4_4Conditions]
@@ -1191,6 +1191,7 @@ Show Speedbar[$d]
 Show hidden files[$d]
 Sort by[$d]
 Sort directories first[$d]
+Sort hidden files last[$d]
 Sort reversed[$d]
 Speedbar Width[$d]
 View Style[$d]
