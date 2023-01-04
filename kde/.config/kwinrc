@@ -15,6 +15,10 @@ DrawWindowCaptions=false
 DrawWindowIcons=false
 LayoutMode=1
 
+[Effect-diminactive]
+DimByGroup=false
+Strength=20
+
 [NightColor]
 Active=true
 LatitudeAuto=40.4409
@@ -22,6 +26,8 @@ LongitudeAuto=-79.9857
 NightTemperature=3500
 
 [Plugins]
+diminactiveEnabled=true
+kwin4_effect_dimscreenEnabled=true
 kwin4_effect_loginEnabled=false
 kwin4_effect_logoutEnabled=false
 kwin4_effect_squashEnabled=false
@@ -33,7 +39,7 @@ ActivitiesMode=0
 BorderActivate=9
 DesktopMode=0
 HighlightWindows=false
-LayoutName=big_icons
+LayoutName=thumbnail_grid
 
 [Windows]
 BorderlessMaximizedWindows=true
