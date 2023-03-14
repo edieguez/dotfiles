@@ -7,7 +7,10 @@ OpenGLIsUnsafe=false
 
 [Desktops]
 Id_1=fa215a17-bfa0-4c8f-ae67-207cc8d79a65
-Number=1
+Id_2=3695dddb-fb47-499e-966c-edc6b90e1086
+Name_1=Left
+Name_2=Right
+Number=2
 Rows=1
 
 [Effect-PresentWindows]
@@ -15,9 +18,16 @@ DrawWindowCaptions=false
 DrawWindowIcons=false
 LayoutMode=1
 
+[Effect-desktopgrid]
+BorderActivate=1
+
 [Effect-diminactive]
 DimByGroup=false
 Strength=20
+
+[Effect-windowview]
+BorderActivate=7
+BorderActivateAll=9
 
 [NightColor]
 Active=true
@@ -37,7 +47,6 @@ mousemarkEnabled=true
 [TabBox]
 ActivitiesMode=0
 BorderActivate=9
-DesktopMode=0
 HighlightWindows=false
 LayoutName=thumbnail_grid
 
