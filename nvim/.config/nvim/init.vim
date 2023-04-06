@@ -9,10 +9,7 @@ set number
 
 call plug#begin('~/.vim/plugged')
   Plug 'jiangmiao/auto-pairs'
-  Plug 'ms-jpq/chadtree', {'branch': 'chad', 'do': 'python3 -m chadtree deps'}
   Plug 'github/copilot.vim'
-  Plug 'tpope/vim-surround'
-  Plug 'luochen1990/rainbow'
 call plug#end()
 
 augroup numbertoggle
@@ -47,5 +44,4 @@ nnoremap <Leader><Enter> o
 inoremap <Leader><Enter> <Esc>o
 
 " IDE like mappings
-nnoremap <Leader>1 :CHADopen<Enter>
 nnoremap <C-E> :buffers<CR>:buffer<Space>
