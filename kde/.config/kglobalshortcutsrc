@@ -26,7 +26,6 @@ display=Display\tMeta+P,Display\tMeta+P,Switch Display
 
 [khotkeys]
 _k_friendly_name=Custom Shortcuts Service
-{459d0d4b-c3d1-4eb4-909f-09ffa1588270}=Ctrl+Alt+T,none,Launch Konsole
 {7941d8b2-9883-4703-ac7f-afc59c5b8008}=Meta+C,none,Brave
 {8e51bca2-b20e-46a3-864b-87ff91237fab}=Ctrl+Shift+Esc,none,Ksysguard
 {a0c03d8c-4df6-4269-aa29-3a7ad0c16b85}=Meta+Esc,none,Turn off screen
@@ -233,6 +232,12 @@ _launch=Meta+E,Meta+E,Dolphin
 [org.kde.kcalc.desktop]
 _k_friendly_name=KCalc
 _launch=Launch (1),Launch (1),KCalc
+
+[org.kde.konsole.desktop]
+NewTab=none,none,Open a New Tab
+NewWindow=none,none,Open a New Window
+_k_friendly_name=Konsole
+_launch=Ctrl+Alt+T,none,Konsole
 
 [org.kde.krunner.desktop]
 RunClipboard=Alt+Shift+F2,Alt+Shift+F2,Run command on clipboard contents
