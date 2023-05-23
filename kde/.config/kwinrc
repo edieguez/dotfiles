@@ -50,5 +50,11 @@ BorderActivate=9
 HighlightWindows=false
 LayoutName=thumbnail_grid
 
+[Tiling]
+padding=4
+
+[Tiling][555bd51b-a3d8-57e2-9071-bc66bfaad81a]
+tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
+
 [Windows]
 BorderlessMaximizedWindows=true
