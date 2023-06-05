@@ -1,0 +1,24 @@
+[Desktop Action new-empty-window]
+Exec=/usr/bin/code --new-window %F
+Icon=visual-studio-code
+Name=New Empty Window
+
+[Desktop Entry]
+Actions=new-empty-window;
+Categories=TextEditor;Development;IDE;
+Comment=Code Editing. Refined.
+Exec=env GTK_USE_PORTAL=1 /usr/bin/code --unity-launch %F
+GenericName=Text Editor
+Icon=visual-studio-code
+Keywords=vscode;
+MimeType=text/plain;inode/directory;application/x-code-workspace;
+Name=Visual Studio Code
+NoDisplay=false
+Path=
+StartupNotify=false
+StartupWMClass=Code
+Terminal=false
+TerminalOptions=
+Type=Application
+X-KDE-SubstituteUID=false
+X-KDE-Username=
