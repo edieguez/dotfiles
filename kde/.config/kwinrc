@@ -32,8 +32,10 @@ LayoutMode=0
 
 [NightColor]
 Active=true
-LatitudeAuto=40.4409
-LongitudeAuto=-79.9857
+LatitudeAuto=19.4371
+LatitudeFixed=19.92
+LongitudeAuto=-99.0111
+LongitudeFixed=-98.8
 NightTemperature=3500
 
 [Plugins]
