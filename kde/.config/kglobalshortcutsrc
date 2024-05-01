@@ -211,7 +211,7 @@ Window to Screen 6=none,,Window to Screen 6
 Window to Screen 7=none,,Window to Screen 7
 _k_friendly_name=KWin
 view_actual_size=none,Meta+0,Zoom to Actual Size
-view_zoom_in=none,Meta++,Zoom In
+view_zoom_in=none,Meta++\tMeta+=,Zoom In
 view_zoom_out=none,Meta+-,Zoom Out
 
 [mediacontrol]
@@ -287,6 +287,7 @@ activate widget 28=none,none,Activate Application Menu Widget
 activate widget 32=none,none,Activate Application Menu Widget
 activate widget 45=none,none,Activate Fokus Widget
 activate widget 87=Alt+F1,none,Activate Application Menu Widget
+activate widget 98=Meta+Backspace,none,Activate Fokus Widget
 clear-history=none,,Clear Clipboard History
 clipboard_action=none,Meta+Ctrl+X,Automatic Action Popup Menu
 cycle-panels=Meta+Alt+P,Meta+Alt+P,Move keyboard focus between panels
