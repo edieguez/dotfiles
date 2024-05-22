@@ -3,6 +3,7 @@ ActivateWhenTypingOnDesktop=false
 ActivityAware=false
 HistoryEnabled=false
 RetainPriorSearch=false
+historyBehavior=Disabled
 
 [PlasmaRunnerManager]
 migrated=true
@@ -23,9 +24,23 @@ desktopsessionsEnabled=false
 helprunnerEnabled=false
 katesessionsEnabled=false
 konsoleprofilesEnabled=false
+krunner_appstreamEnabled=false
+krunner_bookmarksrunnerEnabled=false
+krunner_charrunnerEnabled=false
+krunner_dictionaryEnabled=false
+krunner_katesessionsEnabled=false
 krunner_killEnabled=false
+krunner_konsoleprofilesEnabled=false
+krunner_kwinEnabled=false
+krunner_placesrunnerEnabled=false
+krunner_plasma-desktopEnabled=false
+krunner_powerdevilEnabled=false
+krunner_recentdocumentsEnabled=false
+krunner_sessionsEnabled=false
+krunner_shellEnabled=false
 krunner_spellcheckEnabled=false
 krunner_systemsettingsEnabled=false
+krunner_webshortcutsEnabled=false
 kwin-runner-windowsEnabled=false
 kwinEnabled=false
 locationsEnabled=false
@@ -44,3 +59,6 @@ shellEnabled=true
 unitconverterEnabled=false
 webshortcutsEnabled=false
 windowsEnabled=false
+
+[Plugins][Favorites]
+plugins=krunner_services
