@@ -14,32 +14,28 @@
 -- Ignore dialog windows and set sort order to focus on the last used window
 local wf = hs.window.filter.new(nil)
     :setOverrideFilter({
-        visible = true, -- Only visible windows
-        allowRoles = { "AXStandardWindow", "AXDialog" }, -- Include standard windows and dialogs
+        visible = true,
+        allowRoles = { "AXStandardWindow", "AXDialog" },
     })
     :setSortOrder(hs.window.filter.sortByFocusedLast)
 
--- Focus the first available window or fallback to Finder or last used app
 local function focusNextWindow()
     local windows = wf:getWindows()
 
     local normalWindows = {}
     local fullscreenWindows = {}
 
-    -- Separate windows into different categories
     for _, win in ipairs(windows) do
         if win:isFullScreen() then
             table.insert(fullscreenWindows, win)
-        elseif not win:isMinimized() then
+        elseif not win:isMinimized() and not win:application():isHidden() then
             table.insert(normalWindows, win)
         end
     end
 
     if #normalWindows > 0 then
-        -- Focus the first non-fullscreen window
         normalWindows[1]:focus()
     elseif #fullscreenWindows > 0 then
-        -- Focus the first fullscreen window
         fullscreenWindows[1]:focus()
     else
         -- If no windows are left, focus Finder
@@ -47,8 +43,17 @@ local function focusNextWindow()
     end
 end
 
--- Subscribe to relevant events
-wf:subscribe(hs.window.filter.windowDestroyed, focusNextWindow)
+wf:subscribe(hs.window.filter.windowDestroyed, function(win)
+    if win and win:role() == "AXDialog" then
+        local parentApp = win:application()
+        if parentApp then
+            parentApp:activate() -- Improved dialog handling
+        end
+        return
+    end
+
+    focusNextWindow()
+end)
 wf:subscribe(hs.window.filter.windowMinimized, focusNextWindow)
 
 -- -- Keyboard shortcuts
