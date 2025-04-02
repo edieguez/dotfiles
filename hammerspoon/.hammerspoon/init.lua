@@ -20,12 +20,16 @@ local wf = hs.window.filter.new(nil)
 
 local function focusNextWindow()
     local windows = wf:getWindows()
+    local frontApp = hs.application.frontmostApplication() -- Get current frontmost app
 
     if #windows > 0 then
-        -- Focus the first window in the list
-        windows[1]:focus()
+        local nextWindow = windows[1]
+
+        -- Only focus if the frontmost app is not already one of the valid windows
+        if not nextWindow:application() or nextWindow:application():bundleID() ~= frontApp:bundleID() then
+            nextWindow:focus()
+        end
     else
-        -- If no windows are left, focus Finder
         hs.application.find("Finder"):activate()
     end
 end
@@ -34,7 +38,7 @@ wf:subscribe(hs.window.filter.windowDestroyed, function(win)
     if win and win:role() == "AXDialog" then
         local parentApp = win:application()
         if parentApp then
-            parentApp:activate() -- Improved dialog handling
+            parentApp:activate()
         end
         return
     end
