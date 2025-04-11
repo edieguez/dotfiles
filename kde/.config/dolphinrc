@@ -36,7 +36,6 @@ DisplayPort-0 XPosition 1920x1080=960
 DisplayPort-0 YPosition 1920x1080=591
 MenuBar=Disabled
 RestorePositionForNextInstance=false
-ToolBarsMovable=Disabled
 
 [MainWindow][Toolbar mainToolBar]
 IconSize=16
