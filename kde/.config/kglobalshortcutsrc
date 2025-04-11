@@ -19,14 +19,6 @@ Enable Touchpad=none,Touchpad On,Enable Touchpad
 Toggle Touchpad=none,Touchpad Toggle,Toggle Touchpad
 _k_friendly_name=Touchpad
 
-[khotkeys]
-_k_friendly_name=Custom Shortcuts Service
-{7941d8b2-9883-4703-ac7f-afc59c5b8008}=none,none,Brave
-{8e51bca2-b20e-46a3-864b-87ff91237fab}=Ctrl+Shift+Esc,none,Ksysguard
-{a0c03d8c-4df6-4269-aa29-3a7ad0c16b85}=none,none,Turn off screen
-{b3f3e99e-d62c-499b-b0da-db5a0e5a5481}=none,none,Toggle bluetooth
-{d03619b6-9b3c-48cc-9d9c-a2aadb485550}=none,none,Search
-
 [kmix]
 _k_friendly_name=Audio Volume
 decrease_microphone_volume=Microphone Volume Down,Microphone Volume Down,Decrease Microphone Volume
@@ -46,7 +38,7 @@ toggle_mainwindow_visibility=none,none,Show/Hide Konversation
 [ksmserver]
 Halt Without Confirmation=none,,Shut Down Without Confirmation
 Lock Session=Meta+L,Meta+L\tScreensaver,Lock Session
-Log Out=none,Ctrl+Alt+Del,Show Logout Prompt
+Log Out=none,Ctrl+Alt+Del,Show Logout Screen
 Log Out Without Confirmation=none,,Log Out Without Confirmation
 LogOut=none,,Log Out
 Reboot=none,,Reboot
@@ -63,8 +55,8 @@ Cycle Overview Opposite=none,none,Cycle through Grid View and Overview
 Decrease Opacity=Meta+F11,,Decrease Opacity of Active Window by 5%
 Edit Tiles=Meta+T,Meta+T,Toggle Tiles Editor
 Expose=Meta+Tab,Ctrl+F9,Toggle Present Windows (Current desktop)
-ExposeAll=\tLaunch (C),Ctrl+F10,Toggle Present Windows (All desktops)
-ExposeClass=,Ctrl+F7,Toggle Present Windows (Window class)
+ExposeAll=Launch (C),Ctrl+F10\tLaunch (C),Toggle Present Windows (All desktops)
+ExposeClass=none,Ctrl+F7,Toggle Present Windows (Window class)
 ExposeClassCurrentDesktop=none,none,Toggle Present Windows (Window class on current desktop)
 Grid View=Meta+G,Meta+G,Toggle Grid View
 Increase Opacity=Meta+F12,,Increase Opacity of Active Window by 5%
@@ -141,6 +133,10 @@ Walk Through Windows of Current Application Alternative (Reverse)=none,,Walk Thr
 Window Above Other Windows=none,,Keep Window Above Others
 Window Below Other Windows=none,,Keep Window Below Others
 Window Close=Alt+F4,Alt+F4,Close Window
+Window Custom Quick Tile Bottom=none,,Custom Quick Tile Window to the Bottom
+Window Custom Quick Tile Left=none,,Custom Quick Tile Window to the Left
+Window Custom Quick Tile Right=none,,Custom Quick Tile Window to the Right
+Window Custom Quick Tile Top=none,,Custom Quick Tile Window to the Top
 Window Fullscreen=none,,Make Window Fullscreen
 Window Grow Horizontal=none,,Expand Window Horizontally
 Window Grow Vertical=none,,Expand Window Vertically
@@ -240,14 +236,14 @@ PowerOff=Power Off,Power Off,Power Off
 Sleep=Sleep,Sleep,Suspend
 Toggle Keyboard Backlight=Keyboard Light On/Off,Keyboard Light On/Off,Toggle Keyboard Backlight
 Turn Off Screen=none,none,Turn Off Screen
-_k_friendly_name=KDE Power Management System
+_k_friendly_name=Power Management
 powerProfile=Battery\tMeta+B,Battery\tMeta+B,Switch Power Profile
 
 [plasmashell]
 _k_friendly_name=plasmashell
 activate application launcher=Meta,Meta\tAlt+F1,Activate Application Launcher
 activate task manager entry 1=none,Meta+1,Activate Task Manager Entry 1
-activate task manager entry 10=none,Meta+0,Activate Task Manager Entry 10
+activate task manager entry 10=none,,Activate Task Manager Entry 10
 activate task manager entry 2=none,Meta+2,Activate Task Manager Entry 2
 activate task manager entry 3=none,Meta+3,Activate Task Manager Entry 3
 activate task manager entry 4=none,Meta+4,Activate Task Manager Entry 4
@@ -270,7 +266,7 @@ edit_clipboard=none,none,Edit Contents…
 manage activities=none,Meta+Q,Show Activity Switcher
 next activity=none,Meta+Tab,Walk through activities
 previous activity=none,Meta+Shift+Tab,Walk through activities (Reverse)
-repeat_action=none,Meta+Ctrl+R,Manually Invoke Action on Current Clipboard
+repeat_action=none,,Manually Invoke Action on Current Clipboard
 show dashboard=none,Ctrl+F12,Show Desktop
 show-barcode=none,,Show Barcode…
 show-on-mouse-pos=Meta+V,Meta+V,Show Clipboard Items at Mouse Position
@@ -282,7 +278,7 @@ toggle do not disturb=Meta+Space,,Toggle do not disturb
 [services][brave-browser.desktop]
 _launch=Meta+C
 
-[services][bt-toggle.sh.desktop]
+[services][net.local.bt-toggle.sh.desktop]
 _launch=Meta+F4
 
 [services][org.kde.krunner.desktop]
