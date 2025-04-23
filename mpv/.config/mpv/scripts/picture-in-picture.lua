@@ -13,7 +13,7 @@ local messages = {
     fullscreen = "Fullscreen mode activated"
 }
 local options = {
-    resolution = "720x480",
+    resolution = "854x480",
     position = "bottom-right"
 }
 
