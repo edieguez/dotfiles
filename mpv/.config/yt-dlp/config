@@ -1,3 +1,6 @@
 --cookies-from-browser brave
 --mark-watched
 --sponsorblock-remove all
+--sub-lang en
+--embed-subs
+--add-metadata
