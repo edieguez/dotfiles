@@ -56,6 +56,20 @@ function set_position()
         x, y = 0, 100
     elseif options.position == "bottom-right" then
         x, y = 100, 100
+    elseif options.position == "left-center" then
+        x, y = 0, 50
+    elseif options.position == "right-center" then
+        x, y = 100, 50
+    elseif options.position == "top-center" then
+        x, y = 50, 0
+    elseif options.position == "bottom-center" then
+        x, y = 50, 100
+    elseif options.position == "center" then
+        x, y = 50, 50
+    else
+        -- If the position is not recognized, default to bottom-right
+        mp.osd_message("Invalid position option. Defaulting to bottom-right.", 2)
+        x, y = 100, 100
     end
 
     mp.set_property("geometry", string.format("%d%%:%d%%", x, y))
