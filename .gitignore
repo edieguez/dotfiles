@@ -1,2 +1,3 @@
 mpv/.config/mpv/watch_later
+mpv/.config/mpv/script-opts/*.conf
 .DS_Store
