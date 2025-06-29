@@ -1,0 +1,5 @@
+return {
+    browser = "Brave Browser",  -- "Safari", "Google Chrome", "Firefox", "Brave Browser"
+    terminal = "iTerm",
+    fileManager = "Finder",
+}

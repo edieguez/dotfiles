@@ -9,6 +9,8 @@
 -- 2. Minimized and hidden windows are not considered for focusing.
 -- 3. If all windows are minimized or no windows are left, focus Finder.
 
+hs.application.enableSpotlightForNameSearches(true)
+
 -- Initialize a window filter for all applications
 -- Ignore dialog windows and set sort order to focus on the last used window
 local wf = hs.window.filter.new(nil)
@@ -47,15 +49,18 @@ wf:subscribe(hs.window.filter.windowDestroyed, function(win)
 end)
 wf:subscribe(hs.window.filter.windowMinimized, focusNextWindow)
 
--- -- Keyboard shortcuts
+-- Shortcut configurations
+local config = dofile(hs.configdir .. "/config.lua")
+
+-- Keyboard shortcuts
 hs.hotkey.bind({"ctrl", "cmd"}, "T", function()
-    hs.application.launchOrFocus("iTerm")
+    hs.application.launchOrFocus(config.terminal)
 end)
 
 hs.hotkey.bind({"ctrl", "cmd"}, "E", function()
-    hs.application.launchOrFocus("Finder")
+    hs.application.launchOrFocus(config.fileManager)
 end)
 
 hs.hotkey.bind({"ctrl", "cmd"}, "B", function()
-    hs.application.launchOrFocus("Brave Browser")
+    hs.application.launchOrFocus(config.browser)
 end)
