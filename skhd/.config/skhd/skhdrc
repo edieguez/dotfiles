@@ -114,3 +114,4 @@
 # open mpv
 ralt - f4 : ~/.zsh/zsh-config/bin/macos/bt-toggle.sh
 ralt - f1 : ~/.zsh/zsh-config/bin/macos/mpv-wrapper.sh
+ctrl + shift - escape : open -a "Activity Monitor"
