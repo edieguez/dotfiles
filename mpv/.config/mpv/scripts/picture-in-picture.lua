@@ -102,12 +102,14 @@ end
 mp.observe_property("fullscreen", "bool", function(name, value)
     if value then
         mp.osd_message(messages.fullscreen, 2)
+        mp.set_property("ontop", "no")
         transition_state(states.fullscreen)
     elseif previous_state == states.windowed then
         mp.osd_message(messages.windowed, 2)
         transition_state(states.windowed)
     elseif previous_state == states.picture_in_picture then
         mp.osd_message(messages.picture_in_picture, 2)
+        mp.set_property("ontop", "yes")
         transition_state(states.picture_in_picture)
     end
 
