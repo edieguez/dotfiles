@@ -8,7 +8,13 @@ import json
 import sys
 import os
 
-if sys.argv[1] in ["submit", "stats", "username"]:
+ACTION = sys.argv[1]
+DATABASE_FILE = sys.argv[2]
+API_URL = sys.argv[3]
+VIDEO_ID = sys.argv[4]
+CATEGORIES = sys.argv[5].split(",")
+
+if ACTION in ["submit", "stats", "username"]:
     if not sys.argv[8]:
         if os.path.isfile(sys.argv[7]):
             with open(sys.argv[7]) as f:  
@@ -24,22 +30,16 @@ opener = urllib.request.build_opener()
 opener.addheaders = [("User-Agent", "mpv_sponsorblock/1.0 (https://github.com/po5/mpv_sponsorblock)")]
 urllib.request.install_opener(opener)
 
-if sys.argv[1] == "ranges" and (not sys.argv[2] or not os.path.isfile(sys.argv[2])):
+if ACTION == "ranges" and (not DATABASE_FILE or not os.path.isfile(DATABASE_FILE)):
     sha = None
     if 3 <= int(sys.argv[6]) <= 32:
-        sha = hashlib.sha256(sys.argv[4].encode()).hexdigest()[:int(sys.argv[6])]
+        sha = hashlib.sha256(VIDEO_ID.encode()).hexdigest()[:int(sys.argv[6])]
     times = []
     try:
-        response = urllib.request.urlopen(sys.argv[3] + "/api/skipSegments" + ("/" + sha + "?" if sha else "?videoID=" + sys.argv[4] + "&") + urllib.parse.urlencode([("categories", json.dumps(sys.argv[5].split(",")))]))
+        response = urllib.request.urlopen(f'{API_URL}/api/skipSegments?videoID={VIDEO_ID}&categories={urllib.parse.quote(json.dumps(CATEGORIES))}')
         segments = json.load(response)
         for segment in segments:
-            if sha and sys.argv[4] != segment["videoID"]:
-                continue
-            if sha:
-                for s in segment["segments"]:
-                    times.append(str(s["segment"][0]) + "," + str(s["segment"][1]) + "," + s["UUID"] + "," + s["category"])
-            else:
-                times.append(str(segment["segment"][0]) + "," + str(segment["segment"][1]) + "," + segment["UUID"] + "," + segment["category"])
+            times.append(str(segment["segment"][0]) + "," + str(segment["segment"][1]) + "," + segment["UUID"] + "," + segment["category"])
         print(":".join(times))
     except (TimeoutError, urllib.error.URLError) as e:
         print("error")
@@ -48,13 +48,13 @@ if sys.argv[1] == "ranges" and (not sys.argv[2] or not os.path.isfile(sys.argv[2
             print("")
         else:
             print("error")
-elif sys.argv[1] == "ranges":
-    conn = sqlite3.connect(sys.argv[2])
+elif ACTION == "ranges":
+    conn = sqlite3.connect(DATABASE_FILE)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     times = []
-    for category in sys.argv[5].split(","):
-        c.execute("SELECT startTime, endTime, votes, UUID, category FROM sponsorTimes WHERE videoID = ? AND shadowHidden = 0 AND votes > -1 AND category = ?", (sys.argv[4], category))
+    for category in CATEGORIES:
+        c.execute("SELECT startTime, endTime, votes, UUID, category FROM sponsorTimes WHERE videoID = ? AND shadowHidden = 0 AND votes > -1 AND category = ?", (VIDEO_ID, category))
         sponsors = c.fetchall()
         best = list(sponsors)
         dealtwith = []
@@ -80,10 +80,10 @@ elif sys.argv[1] == "ranges":
         for time in best:
             times.append(str(time["startTime"]) + "," + str(time["endTime"]) + "," + time["UUID"] + "," + time["category"])
     print(":".join(times))
-elif sys.argv[1] == "update":
+elif ACTION == "update":
     try:
-        urllib.request.urlretrieve(sys.argv[3] + "/database.db", sys.argv[2] + ".tmp")
-        os.replace(sys.argv[2] + ".tmp", sys.argv[2])
+        urllib.request.urlretrieve(API_URL + "/database.db", DATABASE_FILE + ".tmp")
+        os.replace(DATABASE_FILE + ".tmp", DATABASE_FILE)
     except PermissionError:
         print("database update failed, file currently in use", file=sys.stderr)
         sys.exit(1)
@@ -96,27 +96,27 @@ elif sys.argv[1] == "update":
     except urllib.error.URLError:
         print("database update failed", file=sys.stderr)
         sys.exit(1)
-elif sys.argv[1] == "submit":
+elif ACTION == "submit":
     try:
-        req = urllib.request.Request(sys.argv[3] + "/api/skipSegments", data=json.dumps({"videoID": sys.argv[4], "segments": [{"segment": [float(sys.argv[5]), float(sys.argv[6])], "category": sys.argv[9]}], "userID": uid}).encode(), headers={"Content-Type": "application/json"})
+        req = urllib.request.Request(API_URL + "/api/skipSegments", data=json.dumps({"videoID": VIDEO_ID, "segments": [{"segment": [float(CATEGORIES), float(sys.argv[6])], "category": sys.argv[9]}], "userID": uid}).encode(), headers={"Content-Type": "application/json"})
         response = urllib.request.urlopen(req)
         print("success")
     except urllib.error.HTTPError as e:
         print(e.code)
     except:
         print("error")
-elif sys.argv[1] == "stats":
+elif ACTION == "stats":
     try:
         if sys.argv[6]:
-            urllib.request.urlopen(sys.argv[3] + "/api/viewedVideoSponsorTime?UUID=" + sys.argv[5])
+            urllib.request.urlopen(API_URL + "/api/viewedVideoSponsorTime?UUID=" + CATEGORIES)
         if sys.argv[9]:
-            urllib.request.urlopen(sys.argv[3] + "/api/voteOnSponsorTime?UUID=" + sys.argv[5] + "&userID=" + uid + "&type=" + sys.argv[9])
+            urllib.request.urlopen(API_URL + "/api/voteOnSponsorTime?UUID=" + CATEGORIES + "&userID=" + uid + "&type=" + sys.argv[9])
     except:
         pass
-elif sys.argv[1] == "username":
+elif ACTION == "username":
     try:
         data = urllib.parse.urlencode({"userID": uid, "userName": sys.argv[9]}).encode()
-        req = urllib.request.Request(sys.argv[3] + "/api/setUsername", data=data)
+        req = urllib.request.Request(API_URL + "/api/setUsername", data=data)
         urllib.request.urlopen(req)
     except:
         pass
