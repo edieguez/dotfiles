@@ -1,6 +1,0 @@
-# Categories to fetch
-categories=sponsor,selfpromo,interaction,poi_highlight,intro,outro,preview,music_offtopic,filler,exclusive_access
-# Categories to skip automatically
-skip_categories=sponsor,selfpromo,interaction,poi_highlight,intro,outro,preview,music_offtopic,filler,exclusive_access
-# If true, sponsored segments will only be skipped once
-skip_once=no
