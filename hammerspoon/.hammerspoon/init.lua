@@ -1,18 +1,13 @@
 -- Manages window focus intelligently using Hammerspoon's window filter.
 --
--- General Functionality:
--- 1. Monitors window events (window destroyed or minimized) to ensure a focused window or application is always active.
--- 2. Implements prioritization rules for selecting the next window or application to focus on.
---
--- Rules for focusing:
--- 1. Prioritize focusing on the first non-fullscreen window in the current application stack.
--- 2. Minimized and hidden windows are not considered for focusing.
--- 3. If all windows are minimized or no windows are left, focus Finder.
+-- Features:
+-- 1. Ensures a window is always focused: when a window is destroyed or minimized, focuses the next available window.
+-- 2. If no windows are available, activates Finder as a fallback.
+-- 3. Binds hotkeys for launching Terminal, Finder, and Browser (customizable).
 
 hs.application.enableSpotlightForNameSearches(true)
 
 -- Initialize a window filter for all applications
--- Ignore dialog windows and set sort order to focus on the last used window
 local wf = hs.window.filter.new(nil)
     :setOverrideFilter({
         visible = true,
@@ -26,9 +21,10 @@ local function focusNextWindow()
 
     if #windows > 0 then
         local nextWindow = windows[1]
-
-        -- Only focus if the frontmost app is not already one of the valid windows
-        if not nextWindow:application() or nextWindow:application():bundleID() ~= frontApp:bundleID() then
+        local nextApp = nextWindow:application()
+        if nextApp and frontApp and nextApp:bundleID() ~= frontApp:bundleID() then
+            nextWindow:focus()
+        elseif not nextApp then
             nextWindow:focus()
         end
     else
@@ -49,18 +45,31 @@ wf:subscribe(hs.window.filter.windowDestroyed, function(win)
 end)
 wf:subscribe(hs.window.filter.windowMinimized, focusNextWindow)
 
--- Shortcut configurations
-local config = dofile(hs.configdir .. "/config.lua")
+-- Load shortcut configuration with error handling
+local config = {}
+local ok, result = pcall(dofile, hs.configdir .. "/config.lua")
+if ok and type(result) == "table" then
+    config = result
+end
+config.terminal = config.terminal or "Terminal"
+config.fileManager = config.fileManager or "Finder"
+config.browser = config.browser or "Safari"
 
 -- Keyboard shortcuts
-hs.hotkey.bind({"ctrl", "cmd"}, "T", function()
-    hs.application.launchOrFocus(config.terminal)
-end)
+if config.terminal then
+    hs.hotkey.bind({"ctrl", "cmd"}, "T", function()
+        hs.application.launchOrFocus(config.terminal)
+    end)
+end
 
-hs.hotkey.bind({"ctrl", "cmd"}, "E", function()
-    hs.application.launchOrFocus(config.fileManager)
-end)
+if config.fileManager then
+    hs.hotkey.bind({"ctrl", "cmd"}, "E", function()
+        hs.application.launchOrFocus(config.fileManager)
+    end)
+end
 
-hs.hotkey.bind({"ctrl", "cmd"}, "B", function()
-    hs.application.launchOrFocus(config.browser)
-end)
+if config.browser then
+    hs.hotkey.bind({"ctrl", "cmd"}, "B", function()
+        hs.application.launchOrFocus(config.browser)
+    end)
+end
