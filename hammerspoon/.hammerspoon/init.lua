@@ -8,7 +8,7 @@
 hs.application.enableSpotlightForNameSearches(true)
 
 -- Initialize a window filter for all applications
-local wf = hs.window.filter.new(nil)
+wf = hs.window.filter.new(nil)
     :setOverrideFilter({
         visible = true,
         allowRoles = { "AXStandardWindow", "AXDialog" },
@@ -51,6 +51,7 @@ local ok, result = pcall(dofile, hs.configdir .. "/config.lua")
 if ok and type(result) == "table" then
     config = result
 end
+
 config.terminal = config.terminal or "Terminal"
 config.fileManager = config.fileManager or "Finder"
 config.browser = config.browser or "Safari"
