@@ -8,7 +8,7 @@
 hs.application.enableSpotlightForNameSearches(true)
 
 -- Initialize a window filter for all applications
-wf = hs.window.filter.new(nil)
+local wf = hs.window.filter.new(nil)
     :setOverrideFilter({
         visible = true,
         allowRoles = { "AXStandardWindow", "AXDialog" },
@@ -17,16 +17,9 @@ wf = hs.window.filter.new(nil)
 
 local function focusNextWindow()
     local windows = wf:getWindows()
-    local frontApp = hs.application.frontmostApplication() -- Get current frontmost app
 
     if #windows > 0 then
-        local nextWindow = windows[1]
-        local nextApp = nextWindow:application()
-        if nextApp and frontApp and nextApp:bundleID() ~= frontApp:bundleID() then
-            nextWindow:focus()
-        elseif not nextApp then
-            nextWindow:focus()
-        end
+        windows[1]:focus()
     else
         hs.application.find("Finder"):activate()
     end
@@ -41,7 +34,17 @@ wf:subscribe(hs.window.filter.windowDestroyed, function(win)
         return
     end
 
-    focusNextWindow()
+    local destroyedApp = win and win:application()
+    hs.timer.doAfter(0.05, function()
+        if destroyedApp then
+            for _, w in ipairs(wf:getWindows()) do
+                if w:application():bundleID() == destroyedApp:bundleID() then
+                    return
+                end
+            end
+        end
+        focusNextWindow()
+    end)
 end)
 wf:subscribe(hs.window.filter.windowMinimized, focusNextWindow)
 
@@ -57,20 +60,14 @@ config.fileManager = config.fileManager or "Finder"
 config.browser = config.browser or "Safari"
 
 -- Keyboard shortcuts
-if config.terminal then
-    hs.hotkey.bind({"ctrl", "cmd"}, "T", function()
-        hs.application.launchOrFocus(config.terminal)
-    end)
-end
+hs.hotkey.bind({"ctrl", "cmd"}, "T", function()
+    hs.application.launchOrFocus(config.terminal)
+end)
 
-if config.fileManager then
-    hs.hotkey.bind({"ctrl", "cmd"}, "E", function()
-        hs.application.launchOrFocus(config.fileManager)
-    end)
-end
+hs.hotkey.bind({"ctrl", "cmd"}, "E", function()
+    hs.application.launchOrFocus(config.fileManager)
+end)
 
-if config.browser then
-    hs.hotkey.bind({"ctrl", "cmd"}, "B", function()
-        hs.application.launchOrFocus(config.browser)
-    end)
-end
+hs.hotkey.bind({"ctrl", "cmd"}, "B", function()
+    hs.application.launchOrFocus(config.browser)
+end)
