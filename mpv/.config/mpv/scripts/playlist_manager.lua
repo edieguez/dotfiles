@@ -246,6 +246,7 @@ local function close_playlist()
     mp.remove_key_binding("pl-esc")
     mp.remove_key_binding("pl-unicode")
     mp.remove_key_binding("pl-bs")
+    mp.remove_key_binding("pl-del")
 end
 
 local function show_playlist_selector()
@@ -332,6 +333,20 @@ local function show_playlist_selector()
             draw_playlist()
         end
     end, {repeatable = true})
+
+    mp.add_forced_key_binding("ctrl+BS", "pl-del", function()
+        if moving then return end
+        local playlist = mp.get_property_native("playlist") or {}
+        local filtered = compute_filtered(playlist)
+        if #filtered == 0 then return end
+        local idx = filtered[cursor + 1]
+        mp.commandv("playlist-remove", idx)
+        local new_filtered = compute_filtered(mp.get_property_native("playlist") or {})
+        local n = #new_filtered
+        if n == 0 then close_playlist(); return end
+        cursor = math.max(0, math.min(cursor, n - 1))
+        draw_playlist()
+    end)
 end
 
 mp.observe_property("playlist-count", "number", function(_, count)
