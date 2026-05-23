@@ -1,0 +1,340 @@
+-- Resolves titles for URL playlist entries via yt-dlp and provides a
+-- playlist dialog matching mpv's built-in select style, with keyboard-driven
+-- navigation, reordering, and search.
+-- Wire it up via input.conf:
+--   p script-binding playlist_manager/select-playlist
+-- and modernz.conf:
+--   playlist_mbtn_left_command=script-binding playlist_manager/select-playlist
+
+local utils = require "mp.utils"
+local msg = require "mp.msg"
+local assdraw = require "mp.assdraw"
+
+local title_cache = {}
+local fetching = {}
+
+local overlay         = mp.create_osd_overlay("ass-events")
+local measure_overlay = mp.create_osd_overlay("ass-events")
+local cursor       = 0
+local moving       = false
+local open         = false
+local search_query = ""
+
+-- Visual constants mirroring mpv console.lua select dialog
+local FONT_SIZE   = 24
+local BORDER      = 1.65
+local BG_ALPHA    = 0x50   -- same as console.lua background_alpha
+local CORNER      = 8
+local PAD         = 10
+local LH          = FONT_SIZE * 1.2
+local MAX_VISIBLE = 12
+
+local function normalize_url(path)
+    if not path then return path end
+    return path:gsub("^ytdl://https?://", "https://"):gsub("^ytdl://", "https://")
+end
+
+local function is_url(path)
+    return type(path) == "string" and path:match("^https?://") ~= nil
+end
+
+local function strip_filename(path)
+    local name = path:match("([^/\\]+)$") or path
+    name = name:match("^(.+)%.[^%.]+$") or name
+    return name:gsub("%%(%x%x)", function(h) return string.char(tonumber(h, 16)) end)
+end
+
+local function get_playlist_item_title(index)
+    local title = mp.get_property("playlist/" .. index .. "/title")
+    if title and title ~= "" then return title end
+    local filename = normalize_url(mp.get_property("playlist/" .. index .. "/filename"))
+    if not filename then return nil end
+    return title_cache[filename] or (is_url(filename) and filename or strip_filename(filename))
+end
+
+local function fetch_url_title(url)
+    url = normalize_url(url)
+    if not is_url(url) or title_cache[url] or fetching[url] then return end
+    fetching[url] = true
+    mp.command_native_async({
+        name = "subprocess",
+        args = {"yt-dlp", "--no-playlist", "--flat-playlist", "-sJ", "--no-config", url},
+        playback_only = false,
+        capture_stdout = true,
+    }, function(_, res)
+        fetching[url] = nil
+        if res.status ~= 0 then
+            msg.warn("yt-dlp failed for " .. url)
+            return
+        end
+        local json = utils.parse_json(res.stdout)
+        if json and json.title then title_cache[url] = json.title end
+    end)
+end
+
+local function fetch_all()
+    for _, entry in ipairs(mp.get_property_native("playlist") or {}) do
+        if not entry.title or entry.title == "" then
+            fetch_url_title(entry.filename)
+        end
+    end
+end
+
+-- Returns a list of 0-based playlist indices whose title contains search_query.
+-- When the query is empty every index is returned in order.
+local function compute_filtered(playlist)
+    if search_query == "" then
+        local result = {}
+        for i = 0, #playlist - 1 do result[#result + 1] = i end
+        return result
+    end
+    local q = search_query:lower()
+    local result = {}
+    for i = 0, #playlist - 1 do
+        local t = (get_playlist_item_title(i) or ""):lower()
+        if t:find(q, 1, true) then result[#result + 1] = i end
+    end
+    return result
+end
+
+-- Wraps the first occurrence of query in text with an orange ASS colour tag,
+-- then restores to restore_color (hex string, e.g. "FFFFFF").
+local function highlight_match(text, query, restore_color)
+    if query == "" then return text end
+    local s, e = text:lower():find(query:lower(), 1, true)
+    if not s then return text end
+    return text:sub(1, s - 1)
+           .. "{\\1c&HFF8800&}"                            -- #0088FF (mpv select default match_color) in ASS BGR
+           .. text:sub(s, e)
+           .. ("{\\1c&H%s&}"):format(restore_color)
+           .. text:sub(e + 1)
+end
+
+local function draw_playlist()
+    local playlist = mp.get_property_native("playlist") or {}
+    if #playlist == 0 then return end
+
+    local pos      = mp.get_property_number("playlist-pos", -1)
+    -- Fixed virtual resolution so the dialog matches mp.input.select() size on any display
+    local W, H     = 1280, 720
+    local filtered = compute_filtered(playlist)
+    local n        = #filtered
+    local vis      = math.min(math.max(n, 1), MAX_VISIBLE)
+
+    local prompt = search_query ~= "" and ("Playlist: " .. search_query .. "▌") or "Playlist"
+
+    -- Measure dialog width from the widest string across all titles and the prompt
+    local longest = prompt
+    for i = 0, #playlist - 1 do
+        local t = "→ " .. (get_playlist_item_title(i) or "")
+        if #t > #longest then longest = t end
+    end
+    measure_overlay.res_x = W
+    measure_overlay.res_y = H
+    measure_overlay.data  = ("{\\an7\\pos(0,0)\\fs%d\\q2}"):format(FONT_SIZE) .. longest
+    local mres = measure_overlay:update()
+    measure_overlay.data = ""
+    measure_overlay:remove()
+    local cw = (mres and mres.width)
+               and math.min(math.ceil(mres.width), W - PAD * 4)
+               or  math.floor(W * 0.70)
+
+    -- Clamp cursor into the current filtered list
+    if n > 0 then cursor = math.max(0, math.min(cursor, n - 1)) end
+
+    local scroll = n > 0 and math.max(0, math.min(cursor - math.floor(vis / 2), n - vis)) or 0
+
+    local x = (W - cw) / 2
+    local y = H / 2 - (vis + 1.5) * LH / 2
+
+    local clip        = ("\\clip(0,0,%d,%d)"):format(math.floor(x + cw), H)
+    local sty         = ("{\\r\\fs%d\\bord%.2f\\fsp0\\q2\\blur0%s}"):format(FONT_SIZE, BORDER, clip)
+    local focused_sty = ("{\\r\\fs%d\\bord0\\fsp0\\q2\\blur0\\1c&H222222&%s}"):format(FONT_SIZE, clip)
+
+    local ass = assdraw.ass_new()
+
+    -- ── Background ──────────────────────────────────────────────────────────
+    ass:new_event()
+    ass:an(7)
+    ass:pos(x, y)
+    ass:append(("{\\bord0\\blur0\\1c&H000000&\\1a&H%02X&\\4a&Hff&}"):format(BG_ALPHA))
+    ass:draw_start()
+    ass:round_rect_cw(-PAD, -PAD, cw + PAD, (vis + 1.5) * LH + PAD, CORNER, CORNER)
+    ass:draw_stop()
+
+    -- ── Prompt ──────────────────────────────────────────────────────────────
+    ass:new_event()
+    ass:an(7)
+    ass:pos(x, y)
+    ass:append(sty .. prompt)
+
+    -- ── Items ───────────────────────────────────────────────────────────────
+    if n == 0 then
+        ass:new_event()
+        ass:an(4)
+        ass:pos(x, y + 2 * LH)
+        ass:append(sty .. "  (no matches)")
+    else
+        for r = 0, vis - 1 do
+            local fi  = scroll + r       -- position in filtered list (0-based)
+            if fi >= n then break end
+            local idx = filtered[fi + 1] -- actual 0-based playlist index
+
+            local cy = y + (r + 2) * LH
+            local ty = y + (r + 1.5) * LH
+
+            -- White highlight box for focused row
+            if fi == cursor then
+                ass:new_event()
+                ass:an(7)
+                ass:pos(x - PAD, ty)
+                ass:append("{\\bord0\\blur0\\4a&Hff&\\1c&HFFFFFF&}")
+                ass:draw_start()
+                ass:rect_cw(0, 0, cw + PAD * 2, LH)
+                ass:draw_stop()
+            end
+
+            local prefix
+            if   fi == cursor and moving then prefix = "→ "
+            elseif idx == pos            then prefix = "▶ "
+            else                              prefix = "  "
+            end
+
+            -- Highlight the matched substring; restore colour differs per row state
+            local raw   = get_playlist_item_title(idx) or ""
+            local title = highlight_match(raw, search_query,
+                                          fi == cursor and "222222" or "FFFFFF")
+
+            ass:new_event()
+            ass:an(4)
+            ass:pos(x, cy)
+            ass:append((fi == cursor and focused_sty or sty) .. prefix .. title)
+        end
+    end
+
+    -- ── Scrollbar ────────────────────────────────────────────────────────────
+    if n > vis then
+        local area_h = vis * LH
+        local bar_h  = math.max((vis / n) * area_h, 8)
+        local bar_y  = y + 1.5 * LH + (scroll / n) * area_h
+        ass:new_event()
+        ass:an(7)
+        ass:pos(x + cw + PAD - 4, bar_y)
+        ass:append("{\\bord0\\blur0\\4a&Hff&\\1c&HFFFFFF&\\1a&H88&}")
+        ass:draw_start()
+        ass:rect_cw(0, 0, 3, bar_h)
+        ass:draw_stop()
+    end
+
+    overlay.res_x = W
+    overlay.res_y = H
+    overlay.z     = 2000
+    overlay.data  = ass.text
+    overlay:update()
+end
+
+local function close_playlist()
+    open   = false
+    moving = false
+    overlay.data = ""
+    overlay:remove()
+    mp.remove_key_binding("pl-up")
+    mp.remove_key_binding("pl-down")
+    mp.remove_key_binding("pl-enter")
+    mp.remove_key_binding("pl-right")
+    mp.remove_key_binding("pl-left")
+    mp.remove_key_binding("pl-esc")
+    mp.remove_key_binding("pl-unicode")
+    mp.remove_key_binding("pl-bs")
+end
+
+local function show_playlist_selector()
+    if open then return end
+
+    local playlist = mp.get_property_native("playlist")
+    if not playlist or #playlist == 0 then
+        mp.osd_message("Playlist empty")
+        return
+    end
+
+    open         = true
+    search_query = ""
+    cursor       = mp.get_property_number("playlist-pos", 0)
+    moving       = false
+    draw_playlist()
+
+    mp.add_forced_key_binding("UP", "pl-up", function()
+        if moving then
+            if cursor > 0 then
+                mp.commandv("playlist-move", cursor, cursor - 1)
+                cursor = cursor - 1
+                draw_playlist()
+            end
+        else
+            if cursor > 0 then cursor = cursor - 1; draw_playlist() end
+        end
+    end)
+
+    mp.add_forced_key_binding("DOWN", "pl-down", function()
+        if moving then
+            local count = mp.get_property_number("playlist-count", 0)
+            if cursor < count - 1 then
+                mp.commandv("playlist-move", cursor, cursor + 2)
+                cursor = cursor + 1
+                draw_playlist()
+            end
+        else
+            local n = #compute_filtered(mp.get_property_native("playlist") or {})
+            if cursor < n - 1 then cursor = cursor + 1; draw_playlist() end
+        end
+    end)
+
+    mp.add_forced_key_binding("ENTER", "pl-enter", function()
+        if not moving then
+            local filtered = compute_filtered(mp.get_property_native("playlist") or {})
+            if #filtered > 0 then
+                local idx = filtered[cursor + 1]
+                close_playlist()
+                mp.set_property("playlist-pos", idx)
+            end
+        end
+    end)
+
+    -- Reordering is blocked while a search filter is active
+    mp.add_forced_key_binding("RIGHT", "pl-right", function()
+        if not moving and search_query == "" then moving = true; draw_playlist() end
+    end)
+
+    mp.add_forced_key_binding("LEFT", "pl-left", function()
+        if moving then moving = false; draw_playlist() end
+    end)
+
+    mp.add_forced_key_binding("ESC", "pl-esc", close_playlist)
+
+    -- Capture every printable character typed by the user for real-time filtering.
+    -- Uses the same "any_unicode" mechanism that mp.input.select() uses internally.
+    mp.add_forced_key_binding("any_unicode", "pl-unicode", function(event)
+        if moving or event.event == "up" then return end
+        local char = event.key_text or ""
+        if char == "" then return end
+        search_query = search_query .. char
+        cursor = 0
+        draw_playlist()
+    end, {complex = true, repeatable = true})
+
+    -- Backspace removes the last UTF-8 character from the search query
+    mp.add_forced_key_binding("BS", "pl-bs", function()
+        if search_query ~= "" then
+            search_query = search_query:gsub("[%z\1-\127\194-\253][\128-\191]*$", "")
+            if search_query == "" then
+                cursor = math.max(0, mp.get_property_number("playlist-pos", 0))
+            end
+            draw_playlist()
+        end
+    end, {repeatable = true})
+end
+
+mp.observe_property("playlist-count", "number", function(_, count)
+    if count and count > 0 then fetch_all() end
+end)
+mp.add_key_binding(nil, "select-playlist", show_playlist_selector)
