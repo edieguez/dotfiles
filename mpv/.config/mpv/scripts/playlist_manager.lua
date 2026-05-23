@@ -15,6 +15,8 @@ local fetching = {}
 
 local overlay         = mp.create_osd_overlay("ass-events")
 local measure_overlay = mp.create_osd_overlay("ass-events")
+local toast_overlay   = mp.create_osd_overlay("ass-events")
+local toast_timer     = nil
 local cursor       = 0
 local moving       = false
 local open         = false
@@ -36,6 +38,20 @@ end
 
 local function is_url(path)
     return type(path) == "string" and path:match("^https?://") ~= nil
+end
+
+-- Broader check for paste validation: any scheme:// URL or magnet link.
+local function is_valid_url(s)
+    return type(s) == "string"
+        and (s:match("^%a[%a%d+%-%.]*://") or s:match("^magnet:")) ~= nil
+end
+
+local function is_in_playlist(item)
+    local norm = normalize_url(item)
+    for _, entry in ipairs(mp.get_property_native("playlist") or {}) do
+        if normalize_url(entry.filename) == norm then return true end
+    end
+    return false
 end
 
 local function strip_filename(path)
@@ -108,6 +124,59 @@ local function highlight_match(text, query, restore_color)
            .. text:sub(s, e)
            .. ("{\\1c&H%s&}"):format(restore_color)
            .. text:sub(e + 1)
+end
+
+local function show_toast(msg, success)
+    if toast_timer then toast_timer:kill(); toast_timer = nil end
+
+    local W, H   = 1280, 720
+    local prefix = success and "✓ " or "✗ "
+    local full   = prefix .. msg
+
+    measure_overlay.res_x = W
+    measure_overlay.res_y = H
+    measure_overlay.data  = ("{\\an7\\pos(0,0)\\fs%d\\q2}"):format(FONT_SIZE) .. full
+    local mres = measure_overlay:update()
+    measure_overlay.data = ""
+    measure_overlay:remove()
+    local cw = (mres and mres.width)
+               and math.min(math.ceil(mres.width), W - PAD * 4)
+               or  math.floor(W * 0.50)
+
+    local x   = PAD * 2
+    local y   = PAD * 2
+    -- ASS BGR: 44EE44 = RGB(68,238,68) green; 3C3CDC = RGB(220,60,60) red
+    local col = success and "44EE44" or "3C3CDC"
+
+    local ass = assdraw.ass_new()
+
+    ass:new_event()
+    ass:an(7)
+    ass:pos(x, y)
+    ass:append(("{\\bord0\\blur0\\1c&H000000&\\1a&H%02X&\\4a&Hff&}"):format(BG_ALPHA))
+    ass:draw_start()
+    ass:round_rect_cw(-PAD, -PAD, cw + PAD, LH + PAD, CORNER, CORNER)
+    ass:draw_stop()
+
+    ass:new_event()
+    ass:an(4)
+    ass:pos(x, y + LH / 2)
+    ass:append(("{\\r\\fs%d\\bord%.2f\\fsp0\\q2\\blur0\\1c&H%s&}"):format(FONT_SIZE, BORDER, col))
+    ass:append(prefix)
+    ass:append("{\\1c&HFFFFFF&}")
+    ass:append(msg)
+
+    toast_overlay.res_x = W
+    toast_overlay.res_y = H
+    toast_overlay.z     = 2001
+    toast_overlay.data  = ass.text
+    toast_overlay:update()
+
+    toast_timer = mp.add_timeout(3, function()
+        toast_overlay.data = ""
+        toast_overlay:remove()
+        toast_timer = nil
+    end)
 end
 
 local function draw_playlist()
@@ -353,3 +422,30 @@ mp.observe_property("playlist-count", "number", function(_, count)
     if count and count > 0 then fetch_all() end
 end)
 mp.add_key_binding(nil, "select-playlist", show_playlist_selector)
+
+mp.add_key_binding("ctrl+v", "paste-url", function()
+    local raw = (mp.get_property("clipboard/text") or ""):match("^%s*(.-)%s*$")
+
+    if raw == "" then
+        show_toast("Clipboard is empty", false)
+        return
+    end
+
+    if not is_valid_url(raw) and not utils.file_info(raw) then
+        show_toast("Not a valid URL or file", false)
+        return
+    end
+
+    if is_in_playlist(raw) then
+        show_toast("Already in playlist", false)
+        return
+    end
+
+    mp.commandv("loadfile", raw, "append-play")
+    fetch_url_title(raw)
+
+    local label = #raw > 55 and (raw:sub(1, 52) .. "…") or raw
+    show_toast("Added: " .. label, true)
+
+    if open then draw_playlist() end
+end)
