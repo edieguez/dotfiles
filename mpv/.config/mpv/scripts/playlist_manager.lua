@@ -13,9 +13,8 @@ local assdraw = require "mp.assdraw"
 local title_cache = {}
 local fetching = {}
 
-local overlay         = mp.create_osd_overlay("ass-events")
-local measure_overlay = mp.create_osd_overlay("ass-events")
-local toast_overlay   = mp.create_osd_overlay("ass-events")
+local overlay       = mp.create_osd_overlay("ass-events")
+local toast_overlay = mp.create_osd_overlay("ass-events")
 local toast_timer     = nil
 local cursor       = 0
 local moving       = false
@@ -24,6 +23,8 @@ local search_query = ""
 
 -- Visual constants mirroring mpv console.lua select dialog
 local FONT_SIZE   = 24
+local FONT_NAME   = "JetBrains Mono"
+local CHAR_W      = FONT_SIZE * 600 / 1320  -- libass maps \fs to hhea height (1320), not UPM (1000)
 local BORDER      = 1.65
 local BG_ALPHA    = 0x50   -- same as console.lua background_alpha
 local CORNER      = 8
@@ -133,15 +134,7 @@ local function show_toast(msg, success)
     local prefix = success and "✓ " or "✗ "
     local full   = prefix .. msg
 
-    measure_overlay.res_x = W
-    measure_overlay.res_y = H
-    measure_overlay.data  = ("{\\an7\\pos(0,0)\\fs%d\\q2}"):format(FONT_SIZE) .. full
-    local mres = measure_overlay:update()
-    measure_overlay.data = ""
-    measure_overlay:remove()
-    local cw = (mres and mres.width)
-               and math.min(math.ceil(mres.width), W - PAD * 4)
-               or  math.floor(W * 0.50)
+    local cw = math.min(math.ceil(#full * CHAR_W), W - PAD * 4)
 
     local x   = PAD * 2
     local y   = PAD * 2
@@ -155,13 +148,14 @@ local function show_toast(msg, success)
     ass:pos(x, y)
     ass:append(("{\\bord0\\blur0\\1c&H000000&\\1a&H%02X&\\4a&Hff&}"):format(BG_ALPHA))
     ass:draw_start()
-    ass:round_rect_cw(-PAD, -PAD, cw + PAD, LH + PAD, CORNER, CORNER)
+    local TPAD = PAD / 2   -- tighter vertical padding for single-line toast
+    ass:round_rect_cw(-PAD, -TPAD, cw + PAD, FONT_SIZE + TPAD, CORNER, CORNER)
     ass:draw_stop()
 
     ass:new_event()
     ass:an(4)
-    ass:pos(x, y + LH / 2)
-    ass:append(("{\\r\\fs%d\\bord%.2f\\fsp0\\q2\\blur0\\1c&H%s&}"):format(FONT_SIZE, BORDER, col))
+    ass:pos(x, y + FONT_SIZE / 2)
+    ass:append(("{\\r\\fn%s\\fs%d\\bord%.2f\\fsp0\\q2\\blur0\\1c&H%s&}"):format(FONT_NAME, FONT_SIZE, BORDER, col))
     ass:append(prefix)
     ass:append("{\\1c&HFFFFFF&}")
     ass:append(msg)
@@ -198,15 +192,7 @@ local function draw_playlist()
         local t = "→ " .. (get_playlist_item_title(i) or "")
         if #t > #longest then longest = t end
     end
-    measure_overlay.res_x = W
-    measure_overlay.res_y = H
-    measure_overlay.data  = ("{\\an7\\pos(0,0)\\fs%d\\q2}"):format(FONT_SIZE) .. longest
-    local mres = measure_overlay:update()
-    measure_overlay.data = ""
-    measure_overlay:remove()
-    local cw = (mres and mres.width)
-               and math.min(math.ceil(mres.width), W - PAD * 4)
-               or  math.floor(W * 0.70)
+    local cw = math.min(math.ceil(#longest * CHAR_W), W - PAD * 4)
 
     -- Clamp cursor into the current filtered list
     if n > 0 then cursor = math.max(0, math.min(cursor, n - 1)) end
@@ -217,8 +203,8 @@ local function draw_playlist()
     local y = H / 2 - (vis + 1.5) * LH / 2
 
     local clip        = ("\\clip(0,0,%d,%d)"):format(math.floor(x + cw), H)
-    local sty         = ("{\\r\\fs%d\\bord%.2f\\fsp0\\q2\\blur0%s}"):format(FONT_SIZE, BORDER, clip)
-    local focused_sty = ("{\\r\\fs%d\\bord0\\fsp0\\q2\\blur0\\1c&H222222&%s}"):format(FONT_SIZE, clip)
+    local sty         = ("{\\r\\fn%s\\fs%d\\bord%.2f\\fsp0\\q2\\blur0%s}"):format(FONT_NAME, FONT_SIZE, BORDER, clip)
+    local focused_sty = ("{\\r\\fn%s\\fs%d\\bord0\\fsp0\\q2\\blur0\\1c&H222222&%s}"):format(FONT_NAME, FONT_SIZE, clip)
 
     local ass = assdraw.ass_new()
 
