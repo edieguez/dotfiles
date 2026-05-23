@@ -11,15 +11,18 @@ local msg = require "mp.msg"
 local assdraw = require "mp.assdraw"
 
 local title_cache = {}
-local fetching = {}
+local fetching    = {}
+local fetch_queue = {}
+local fetch_active = false
 
 local overlay       = mp.create_osd_overlay("ass-events")
 local toast_overlay = mp.create_osd_overlay("ass-events")
-local toast_timer     = nil
-local cursor       = 0
-local moving       = false
-local open         = false
-local search_query = ""
+local toast_timer   = nil
+local cursor        = 0
+local moving        = false
+local open          = false
+local search_query  = ""
+local draw_playlist  -- forward declaration (defined later, used in process_fetch_queue)
 
 -- Visual constants mirroring mpv console.lua select dialog
 local FONT_SIZE   = 24
@@ -69,24 +72,42 @@ local function get_playlist_item_title(index)
     return title_cache[filename] or (is_url(filename) and filename or strip_filename(filename))
 end
 
-local function fetch_url_title(url)
-    url = normalize_url(url)
-    if not is_url(url) or title_cache[url] or fetching[url] then return end
+local function process_fetch_queue()
+    if fetch_active or #fetch_queue == 0 then return end
+    local url = table.remove(fetch_queue, 1)
+    if title_cache[url] then process_fetch_queue(); return end
+    fetch_active = true
     fetching[url] = true
     mp.command_native_async({
         name = "subprocess",
         args = {"yt-dlp", "--no-playlist", "--flat-playlist", "-sJ", "--no-config", url},
         playback_only = false,
         capture_stdout = true,
+        capture_stderr = true,
     }, function(_, res)
         fetching[url] = nil
-        if res.status ~= 0 then
+        fetch_active = false
+        if res.status == 0 then
+            local json = utils.parse_json(res.stdout)
+            if json and json.title then
+                title_cache[url] = json.title
+                if open then draw_playlist() end
+            end
+        else
             msg.warn("yt-dlp failed for " .. url)
-            return
         end
-        local json = utils.parse_json(res.stdout)
-        if json and json.title then title_cache[url] = json.title end
+        process_fetch_queue()
     end)
+end
+
+local function fetch_url_title(url)
+    url = normalize_url(url)
+    if not is_url(url) or title_cache[url] or fetching[url] then return end
+    for _, queued in ipairs(fetch_queue) do
+        if queued == url then return end
+    end
+    fetch_queue[#fetch_queue + 1] = url
+    process_fetch_queue()
 end
 
 local function fetch_all()
@@ -173,7 +194,7 @@ local function show_toast(msg, success)
     end)
 end
 
-local function draw_playlist()
+draw_playlist = function()
     local playlist = mp.get_property_native("playlist") or {}
     if #playlist == 0 then return end
 
@@ -321,13 +342,19 @@ local function show_playlist_selector()
 
     mp.add_forced_key_binding("UP", "pl-up", function()
         if moving then
+            local count = mp.get_property_number("playlist-count", 0)
             if cursor > 0 then
                 mp.commandv("playlist-move", cursor, cursor - 1)
                 cursor = cursor - 1
-                draw_playlist()
+            else
+                mp.commandv("playlist-move", 0, count)
+                cursor = count - 1
             end
+            draw_playlist()
         else
-            if cursor > 0 then cursor = cursor - 1; draw_playlist() end
+            local n = #compute_filtered(mp.get_property_native("playlist") or {})
+            cursor = (cursor - 1 + n) % n
+            draw_playlist()
         end
     end)
 
@@ -337,11 +364,15 @@ local function show_playlist_selector()
             if cursor < count - 1 then
                 mp.commandv("playlist-move", cursor, cursor + 2)
                 cursor = cursor + 1
-                draw_playlist()
+            else
+                mp.commandv("playlist-move", count - 1, 0)
+                cursor = 0
             end
+            draw_playlist()
         else
             local n = #compute_filtered(mp.get_property_native("playlist") or {})
-            if cursor < n - 1 then cursor = cursor + 1; draw_playlist() end
+            cursor = (cursor + 1) % n
+            draw_playlist()
         end
     end)
 
@@ -406,6 +437,9 @@ end
 
 mp.observe_property("playlist-count", "number", function(_, count)
     if count and count > 0 then fetch_all() end
+end)
+mp.observe_property("playlist-pos", "number", function()
+    if open then draw_playlist() end
 end)
 mp.add_key_binding(nil, "select-playlist", show_playlist_selector)
 
