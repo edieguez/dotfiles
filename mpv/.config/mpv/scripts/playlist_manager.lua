@@ -119,6 +119,27 @@ local function fetch_all()
     end
 end
 
+-- Removes duplicate playlist entries, keeping the first occurrence of each
+-- filename. Called whenever playlist-count rises so every ingestion path
+-- (command-line arguments, loadfile, playlist-append, IPC, etc.) is covered.
+local function dedup_playlist()
+    local playlist = mp.get_property_native("playlist") or {}
+    local seen     = {}
+    local to_remove = {}
+    for i = 0, #playlist - 1 do
+        local norm = normalize_url(playlist[i + 1].filename) or playlist[i + 1].filename
+        if seen[norm] then
+            to_remove[#to_remove + 1] = i
+        else
+            seen[norm] = true
+        end
+    end
+    -- Remove in reverse order so earlier indices stay valid.
+    for i = #to_remove, 1, -1 do
+        mp.commandv("playlist-remove", to_remove[i])
+    end
+end
+
 -- Returns a list of 0-based playlist indices whose title contains search_query.
 -- When the query is empty every index is returned in order.
 local function compute_filtered(playlist)
@@ -378,7 +399,10 @@ local function show_playlist_selector()
     end)
 
     mp.add_forced_key_binding("ENTER", "pl-enter", function()
-        if not moving then
+        if moving then
+            moving = false
+            draw_playlist()
+        else
             local filtered = compute_filtered(mp.get_property_native("playlist") or {})
             if #filtered > 0 then
                 local idx = filtered[cursor + 1]
@@ -460,8 +484,15 @@ local function show_playlist_selector()
     end)
 end
 
+local prev_playlist_count = 0
 mp.observe_property("playlist-count", "number", function(_, count)
-    if count and count > 0 then fetch_all() end
+    count = count or 0
+    if count > prev_playlist_count then
+        dedup_playlist()
+        fetch_all()
+    end
+    -- Re-read the actual count after dedup so removals don't look like additions.
+    prev_playlist_count = mp.get_property_number("playlist-count", 0)
 end)
 mp.observe_property("playlist-pos", "number", function()
     if open then draw_playlist() end
