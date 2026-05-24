@@ -20,6 +20,7 @@ local toast_overlay = mp.create_osd_overlay("ass-events")
 local toast_timer   = nil
 local cursor        = 0
 local moving        = false
+local move_origin   = 0
 local open          = false
 local search_query  = ""
 local draw_playlist  -- forward declaration (defined later, used in process_fetch_queue)
@@ -389,14 +390,38 @@ local function show_playlist_selector()
 
     -- Reordering is blocked while a search filter is active
     mp.add_forced_key_binding("RIGHT", "pl-right", function()
-        if not moving and search_query == "" then moving = true; draw_playlist() end
+        if not moving and search_query == "" then
+            move_origin = cursor
+            moving = true
+            draw_playlist()
+        end
     end)
 
     mp.add_forced_key_binding("LEFT", "pl-left", function()
         if moving then moving = false; draw_playlist() end
     end)
 
-    mp.add_forced_key_binding("ESC", "pl-esc", close_playlist)
+    mp.add_forced_key_binding("ESC", "pl-esc", function()
+        if moving then
+            -- Restore item to its original position before moving mode was entered
+            if cursor ~= move_origin then
+                if cursor > move_origin then
+                    mp.commandv("playlist-move", cursor, move_origin)
+                else
+                    mp.commandv("playlist-move", cursor, move_origin + 1)
+                end
+            end
+            cursor = move_origin
+            moving = false
+            draw_playlist()
+        elseif search_query ~= "" then
+            search_query = ""
+            cursor = math.max(0, mp.get_property_number("playlist-pos", 0))
+            draw_playlist()
+        else
+            close_playlist()
+        end
+    end)
 
     -- Capture every printable character typed by the user for real-time filtering.
     -- Uses the same "any_unicode" mechanism that mp.input.select() uses internally.
