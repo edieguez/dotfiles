@@ -25,16 +25,32 @@ local open          = false
 local search_query  = ""
 local draw_playlist  -- forward declaration (defined later, used in process_fetch_queue)
 
--- Visual constants mirroring mpv console.lua select dialog
+-- Visual constants taken directly from the mpv built-in select/console script defaults:
+--   font_size=24  border_size=1.65  background_alpha=80(=0x50)  corner_radius=8
+--   padding=10    focused_color=#222222  focused_back_color=#FFFFFF  match_color=#0088FF
+-- The only intentional difference: no explicit \fn tag so the OSD font is used,
+-- exactly as the select script does (monospace_font="" → no \fn injected).
 local FONT_SIZE   = 24
-local FONT_NAME   = "JetBrains Mono"
 local CHAR_W      = FONT_SIZE * 600 / 1320  -- libass maps \fs to hhea height (1320), not UPM (1000)
 local BORDER      = 1.65
-local BG_ALPHA    = 0x50   -- same as console.lua background_alpha
+local BG_ALPHA    = 0x50   -- background_alpha = 80 = 0x50 in the select script
 local CORNER      = 8
 local PAD         = 10
 local LH          = FONT_SIZE * 1.2
 local MAX_VISIBLE = 12
+
+-- Returns the virtual canvas width that keeps pixels square for the current display
+--   res_y = 720 (fixed), res_x = 720 * display_aspect (dynamic).
+-- On a 16:9 screen this is 1280; on ultrawide it grows proportionally,
+-- so the dialog content stays the same physical size on every display.
+local function get_virt_w()
+    local osd = mp.get_property_native("osd-dimensions") or {}
+    local ar  = osd.aspect
+    if not ar or ar <= 0 then
+        ar = (osd.w and osd.h and osd.h > 0) and (osd.w / osd.h) or (16 / 9)
+    end
+    return math.floor(720 * ar)
+end
 
 local function normalize_url(path)
     if not path then return path end
@@ -157,14 +173,14 @@ local function compute_filtered(playlist)
     return result
 end
 
--- Wraps the first occurrence of query in text with an orange ASS colour tag,
--- then restores to restore_color (hex string, e.g. "FFFFFF").
+-- Wraps the first occurrence of query in text with the select script's
+-- match_color (#0088FF = ASS FF8800), then restores to restore_color.
 local function highlight_match(text, query, restore_color)
     if query == "" then return text end
     local s, e = text:lower():find(query:lower(), 1, true)
     if not s then return text end
     return text:sub(1, s - 1)
-           .. "{\\1c&HFF8800&}"                            -- #0088FF (mpv select default match_color) in ASS BGR
+           .. "{\\1c&HFF8800&}"    -- #0088FF (match_color default in select script) in ASS BGR
            .. text:sub(s, e)
            .. ("{\\1c&H%s&}"):format(restore_color)
            .. text:sub(e + 1)
@@ -173,7 +189,7 @@ end
 local function show_toast(msg, success)
     if toast_timer then toast_timer:kill(); toast_timer = nil end
 
-    local W, H   = 1280, 720
+    local W, H   = get_virt_w(), 720
     local prefix = success and "✓ " or "✗ "
     local full   = prefix .. msg
 
@@ -198,7 +214,7 @@ local function show_toast(msg, success)
     ass:new_event()
     ass:an(4)
     ass:pos(x, y + FONT_SIZE / 2)
-    ass:append(("{\\r\\fn%s\\fs%d\\bord%.2f\\fsp0\\q2\\blur0\\1c&H%s&}"):format(FONT_NAME, FONT_SIZE, BORDER, col))
+    ass:append(("{\\r\\fs%d\\bord%.2f\\fsp0\\q2\\blur0\\1c&H%s&}"):format(FONT_SIZE, BORDER, col))
     ass:append(prefix)
     ass:append("{\\1c&HFFFFFF&}")
     ass:append(msg)
@@ -221,13 +237,18 @@ draw_playlist = function()
     if #playlist == 0 then return end
 
     local pos      = mp.get_property_number("playlist-pos", -1)
-    -- Fixed virtual resolution so the dialog matches mp.input.select() size on any display
-    local W, H     = 1280, 720
+    -- Dynamic virtual resolution: res_y=720 fixed, res_x adapts to display aspect.
+    -- Matches the select script and ModernZ — no stretching on ultrawide screens.
+    local H        = 720
+    local W        = get_virt_w()
     local filtered = compute_filtered(playlist)
     local n        = #filtered
     local vis      = math.min(math.max(n, 1), MAX_VISIBLE)
+    -- vis_max anchors the dialog's top edge to where the full-size dialog sits.
+    -- This keeps the position fixed while the height shrinks to match search results.
+    local vis_max  = math.min(math.max(#playlist, 1), MAX_VISIBLE)
 
-    local prompt = search_query ~= "" and ("Playlist: " .. search_query .. "▌") or "Playlist"
+    local prompt = search_query ~= "" and ("Select a playlist entry: " .. search_query) or "Select a playlist entry: "
 
     -- Measure dialog width from the widest string across all titles and the prompt
     local longest = prompt
@@ -243,11 +264,13 @@ draw_playlist = function()
     local scroll = n > 0 and math.max(0, math.min(cursor - math.floor(vis / 2), n - vis)) or 0
 
     local x = (W - cw) / 2
-    local y = H / 2 - (vis + 1.5) * LH / 2
+    local y = H / 2 - (vis_max + 1.5) * LH / 2  -- anchored to full-size top; only height shrinks
 
     local clip        = ("\\clip(0,0,%d,%d)"):format(math.floor(x + cw), H)
-    local sty         = ("{\\r\\fn%s\\fs%d\\bord%.2f\\fsp0\\q2\\blur0%s}"):format(FONT_NAME, FONT_SIZE, BORDER, clip)
-    local focused_sty = ("{\\r\\fn%s\\fs%d\\bord0\\fsp0\\q2\\blur0\\1c&H222222&%s}"):format(FONT_NAME, FONT_SIZE, clip)
+    -- No \fn tag → uses OSD default font, matching select script (monospace_font="")
+    local sty         = ("{\\r\\fs%d\\bord%.2f\\fsp0\\q2\\blur0%s}"):format(FONT_SIZE, BORDER, clip)
+    -- Focused: dark text (#222222 = focused_color) over the white box drawn below
+    local focused_sty = ("{\\r\\fs%d\\bord0\\fsp0\\q2\\blur0\\1c&H222222&%s}"):format(FONT_SIZE, clip)
 
     local ass = assdraw.ass_new()
 
@@ -281,7 +304,7 @@ draw_playlist = function()
             local cy = y + (r + 2) * LH
             local ty = y + (r + 1.5) * LH
 
-            -- White highlight box for focused row
+            -- White highlight box for focused row (focused_back_color=#FFFFFF in select script)
             if fi == cursor then
                 ass:new_event()
                 ass:an(7)
@@ -299,6 +322,7 @@ draw_playlist = function()
             end
 
             -- Highlight the matched substring; restore colour differs per row state
+            -- (focused row has dark #222222 text on white; others have white text)
             local raw   = get_playlist_item_title(idx) or ""
             local title = highlight_match(raw, search_query,
                                           fi == cursor and "222222" or "FFFFFF")
