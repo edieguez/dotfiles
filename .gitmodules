@@ -3,4 +3,4 @@
 	url = https://github.com/Samillion/ModernZ.git
 [submodule "mpv/.config/mpv/plugins/playlist-manager"]
 	path = mpv/.config/mpv/plugins/playlist-manager
-	url = git@github.com:edieguez/playlist-manager.git
+	url = https://github.com/edieguez/playlist-manager.git
