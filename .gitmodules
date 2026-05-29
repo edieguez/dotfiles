@@ -4,3 +4,6 @@
 [submodule "mpv/.config/mpv/plugins/playlist-manager"]
 	path = mpv/.config/mpv/plugins/playlist-manager
 	url = https://github.com/edieguez/playlist-manager.git
+[submodule "mpv/.config/mpv/plugins/yas"]
+	path = mpv/.config/mpv/plugins/yas
+	url = https://github.com/edieguez/yas.git
