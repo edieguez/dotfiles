@@ -1,6 +1,5 @@
-mpv/.config/mpv/watch_later
-mpv/.config/mpv/script-opts/*.conf
 .DS_Store
+/mpv/.config/mpv/last_playlist.json
 hammerspoon/.hammerspoon/config.lua
-/mpv/.config/mpv/last_playlist.m3u8
-/mpv/.config/mpv/last_playlist_pos.txt
+mpv/.config/mpv/script-opts/*.conf
+mpv/.config/mpv/watch_later
