@@ -16,3 +16,4 @@
 	defaultRemote = origin
 [core]
 	excludesfile = ~/.gitignore
+	editor = nvim
