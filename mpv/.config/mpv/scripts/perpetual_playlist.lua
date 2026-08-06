@@ -1,0 +1,1 @@
+../plugins/perpetual-playlist/scripts/perpetual_playlist.lua
