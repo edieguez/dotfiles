@@ -7,3 +7,6 @@
 [submodule "mpv/.config/mpv/plugins/yas"]
 	path = mpv/.config/mpv/plugins/yas
 	url = https://github.com/edieguez/yas.git
+[submodule "mpv/.config/mpv/plugins/perpetual-playlist"]
+	path = mpv/.config/mpv/plugins/perpetual-playlist
+	url = https://github.com/edieguez/perpetual-playlist.git
