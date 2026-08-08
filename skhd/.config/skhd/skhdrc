@@ -111,7 +111,9 @@
 # open qutebrowser
 # cmd + shift - return : ~/Scripts/qtb.sh
 
-# open mpv
+# mpv: queue a clipboard URL/file into the running instance (or start a
+# fresh one if none is running) via bin/mpv-add
 ralt - f4 : ~/.zsh/zsh-config/bin/macos/bt-toggle.sh
-ralt - f1 : ~/.zsh/zsh-config/bin/macos/mpv-wrapper.sh
+ralt - f1 : ~/.zsh/zsh-config/bin/macos/mpv-wrapper.sh --next
+ralt - f2 : ~/.zsh/zsh-config/bin/macos/mpv-wrapper.sh
 ctrl + shift - escape : open -a "Activity Monitor"
