@@ -10,3 +10,6 @@
 [submodule "mpv/.config/mpv/plugins/perpetual-playlist"]
 	path = mpv/.config/mpv/plugins/perpetual-playlist
 	url = https://github.com/edieguez/perpetual-playlist.git
+[submodule "mpv/.config/mpv/plugins/ytdl-prefetch"]
+	path = mpv/.config/mpv/plugins/ytdl-prefetch
+	url = /Users/emmanuel/Projects/ytdl-prefetch
