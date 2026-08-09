@@ -1085,7 +1085,13 @@ end
 function get_ytdl_hook_opt_paths()
 	local paths = {}
 	local sep = is_os_windows() and ";" or ":"
-	local hook_opts = { ytdl_path = "" }
+	-- Only ytdl_path is actually used below, but read_options parses the
+	-- whole shared ytdl_hook.conf file - any real ytdl_hook.lua option
+	-- set there that isn't a key of this table gets logged as "unknown
+	-- key, ignoring" under this script's own name. Declare the other
+	-- option this config sets (see script-opts/ytdl_hook.conf) purely to
+	-- keep it recognized; its value is unused here.
+	local hook_opts = { ytdl_path = "", try_ytdl_first = false }
 
 	mp.options.read_options(hook_opts, "ytdl_hook")
 
