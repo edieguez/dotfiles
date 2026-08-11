@@ -1,1 +1,0 @@
-../plugins/ytdl-prefetch/scripts/ytdl_prefetch.lua

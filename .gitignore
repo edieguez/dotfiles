@@ -1,6 +1,2 @@
 .DS_Store
-/mpv/.config/mpv/last_playlist.json
-/mpv/.config/mpv/yas_stats.conf
 hammerspoon/.hammerspoon/config.lua
-mpv/.config/mpv/script-opts/*.conf
-mpv/.config/mpv/watch_later
