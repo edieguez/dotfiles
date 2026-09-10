@@ -1,0 +1,5 @@
+theme = Pure Black Vivid
+
+# brew install --cask font-jetbrains-mono
+font-family = "JetBrains Mono"
+font-size = 12.5
