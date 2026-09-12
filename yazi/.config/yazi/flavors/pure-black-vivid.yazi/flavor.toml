@@ -1,0 +1,36 @@
+# Pure Black Vivid theme
+
+[icon]
+dirs = [
+	{ name = ".config",     text = "", fg = "magenta" },
+	{ name = ".git",        text = "", fg = "cyan" },
+	{ name = ".github",     text = "", fg = "blue" },
+	{ name = ".npm",        text = "", fg = "blue" },
+	{ name = "Desktop",     text = "", fg = "cyan" },
+	{ name = "Development", text = "", fg = "cyan" },
+	{ name = "Documents",   text = "", fg = "cyan" },
+	{ name = "Downloads",   text = "", fg = "cyan" },
+	{ name = "Library",     text = "", fg = "cyan" },
+	{ name = "Movies",      text = "", fg = "cyan" },
+	{ name = "Music",       text = "", fg = "cyan" },
+	{ name = "Pictures",    text = "", fg = "cyan" },
+	{ name = "Projects",    text = "", fg = "cyan" },
+	{ name = "Public",      text = "", fg = "cyan" },
+	{ name = "Videos",      text = "", fg = "cyan" },
+]
+
+conds = [
+	# Special files — default hardcodes Material-style hex here, unrelated to the terminal theme
+	{ if = "link",    text = "", fg = "darkgray" },
+	{ if = "block",   text = "", fg = "yellow" },
+	{ if = "char",    text = "", fg = "yellow" },
+	{ if = "fifo",    text = "", fg = "yellow" },
+	{ if = "sock",    text = "", fg = "yellow" },
+	{ if = "sticky",  text = "", fg = "yellow" },
+	{ if = "dummy",   text = "", fg = "red" },
+
+	# Directories / executables
+	{ if = "dir & hovered", text = "", fg = "blue" },
+	{ if = "dir",           text = "", fg = "blue" },
+	{ if = "exec",          text = "", fg = "green" },
+]
