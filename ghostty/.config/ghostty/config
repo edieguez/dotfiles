@@ -4,3 +4,9 @@ mouse-hide-while-typing = true
 # brew install --cask font-jetbrains-mono
 font-family = "JetBrains Mono"
 font-size = 12.5
+
+# splits navigation
+keybind = ctrl+h=goto_split:left
+keybind = ctrl+j=goto_split:down
+keybind = ctrl+k=goto_split:up
+keybind = ctrl+l=goto_split:right
