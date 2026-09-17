@@ -1,19 +1,39 @@
 [user]
     email = dieguezemmanuel@gmail.com
     name = edieguez
+
 [credential]
 	helper = store
+
 [pull]
 	rebase = true
+
 [revert]
   reference = true
+
 [alias]
   nuke = "!f(){ git reset --hard; git clean -df; if [ -d ".git/rebase-apply" ] || [ -d ".git/rebase-merge" ]; then git rebase --abort; fi; }; f"
   graph = log --all --graph --format='format:%C(yellow)%h%C(reset) %s %C(magenta)%cr%C(reset)%C(auto)%d%C(reset)'
+
 [advice]
 	diverging = false
+
 [checkout]
 	defaultRemote = origin
+
 [core]
 	excludesfile = ~/.gitignore
 	editor = nvim
+	pager = delta
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true  # use n and N to move between diff sections
+    dark = true      # or light = true, or omit for auto-detection
+    side-by-side = true
+    line-numbers = true
+
+[merge]
+    conflictStyle = zdiff3
