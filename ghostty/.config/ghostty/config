@@ -1,6 +1,7 @@
 theme = Pure Black Vivid
 mouse-hide-while-typing = true
 custom-shader = ~/.config/ghostty/shaders/cursor-smear.glsl
+macos-option-as-alt = right
 
 # brew install --cask font-jetbrains-mono
 font-family = "JetBrains Mono"
