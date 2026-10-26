@@ -1,11 +1,28 @@
 #!/bin/sh
 # Ghostty runs this in every new OS window.
+#
+# The tmux server must not be started from Ghostty's process tree: macOS 27
+# sends SIGTERM to the whole app coalition about a second after Ghostty quits,
+# and setsid/nohup do not leave a coalition. So the server runs as a launchd
+# job (own coalition, see ~/.config/tmux/tmux-server.plist), started here on
+# demand. "tmux -D" keeps the server alive with zero sessions.
+tmux=/opt/homebrew/bin/tmux
+plist=$HOME/.config/tmux/tmux-server.plist
+
+if ! $tmux ls >/dev/null 2>&1; then
+  launchctl bootstrap "gui/$(id -u)" "$plist" 2>/dev/null \
+    || launchctl kickstart "gui/$(id -u)/tmux-server"
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    $tmux ls >/dev/null 2>&1 && break
+    sleep 0.2
+  done
+fi
+
 # First window: attach to session "main". Further windows: a new session in
 # the "main" group, so they share windows but switch and scroll on their own.
 # Grouped extras are destroyed on detach (destroy-unattached keep-last).
-tmux=/opt/homebrew/bin/tmux
 if [ "$($tmux display -p -t main '#{session_attached}' 2>/dev/null)" = 0 ]; then
   exec $tmux attach-session -t main
 fi
-$tmux new-session -s main -t main 2>/dev/null && exit
-exec $tmux new-session -t main
+$tmux new-session -s main -t main -c "$HOME" 2>/dev/null && exit
+exec $tmux new-session -t main -c "$HOME"

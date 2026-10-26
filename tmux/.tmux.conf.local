@@ -394,6 +394,11 @@ unbind C-a
 # ~/.local/bin/tmux-main). Extra grouped sessions are destroyed on detach.
 set -g destroy-unattached keep-last
 
+# The server runs under launchd with a bare environment; copy these from the
+# attaching Ghostty client so new panes see them (SSH_AUTH_SOCK etc. are
+# already in the default list).
+set -ga update-environment "LANG COLORTERM TERM_PROGRAM TERM_PROGRAM_VERSION GHOSTTY_RESOURCES_DIR GHOSTTY_BIN_DIR GHOSTTY_SHELL_FEATURES"
+
 # if you don't want Oh my tmux! to alter a binding, use #!important
 # bind c new-window -c '#{pane_current_path}' #!important
 
