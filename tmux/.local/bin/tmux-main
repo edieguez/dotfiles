@@ -1,0 +1,11 @@
+#!/bin/sh
+# Ghostty runs this in every new OS window.
+# First window: attach to session "main". Further windows: a new session in
+# the "main" group, so they share windows but switch and scroll on their own.
+# Grouped extras are destroyed on detach (destroy-unattached keep-last).
+tmux=/opt/homebrew/bin/tmux
+if [ "$($tmux display -p -t main '#{session_attached}' 2>/dev/null)" = 0 ]; then
+  exec $tmux attach-session -t main
+fi
+$tmux new-session -s main -t main 2>/dev/null && exit
+exec $tmux new-session -t main
