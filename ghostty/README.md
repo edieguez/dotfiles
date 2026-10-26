@@ -37,7 +37,7 @@ bindings that are not listed here still work.
 
 | Key | tmux | Does what |
 |---|---|---|
-| `ctrl+1..9` | `<prefix> 1..9` | go to window N |
+| `cmd+1..9` | `<prefix> 1..9` | go to window N |
 | `cmd+[` / `cmd+]` | `<prefix> C-h` / `C-l` | previous / next window |
 | `ctrl+tab` | `<prefix> Tab` | last window |
 | `cmd+shift+←` / `→` | `<prefix> {` / `}` | move window left / right |
