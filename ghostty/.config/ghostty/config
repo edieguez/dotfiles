@@ -15,17 +15,29 @@ command = /bin/zsh -l -c "$HOME/.local/bin/tmux-main"
 confirm-close-surface = false
 
 # ------------------------------------------------------------------------------
-# Tab (Window) Navigation (Ctrl + 1 through 9)
+# Window Navigation (Cmd)
 # ------------------------------------------------------------------------------
-keybind = ctrl+1=text:\x021
-keybind = ctrl+2=text:\x022
-keybind = ctrl+3=text:\x023
-keybind = ctrl+4=text:\x024
-keybind = ctrl+5=text:\x025
-keybind = ctrl+6=text:\x026
-keybind = ctrl+7=text:\x027
-keybind = ctrl+8=text:\x028
-keybind = ctrl+9=text:\x029
+# Cmd + 1..9: Go to window N
+keybind = super+1=text:\x021
+keybind = super+2=text:\x022
+keybind = super+3=text:\x023
+keybind = super+4=text:\x024
+keybind = super+5=text:\x025
+keybind = super+6=text:\x026
+keybind = super+7=text:\x027
+keybind = super+8=text:\x028
+keybind = super+9=text:\x029
+
+# Cmd + [ / ]: Previous / next window (prefix + C-h / C-l; Oh my Tmux uses p for paste)
+keybind = super+[=text:\x02\x08
+keybind = super+]=text:\x02\x0c
+
+# Ctrl + Tab: Last window (prefix + Tab)
+keybind = ctrl+tab=text:\x02\x09
+
+# Cmd + Shift + Left / Right: Move current window left / right (prefix + { / })
+keybind = super+shift+left=text:\x02{
+keybind = super+shift+right=text:\x02}
 
 # ------------------------------------------------------------------------------
 # Window Creation & Renaming (Cmd)
@@ -54,11 +66,17 @@ keybind = super+w=text:\x02x
 # Cmd + K: Clear screen and scrollback of the current pane (prefix + C-k)
 keybind = super+k=text:\x02\x0b
 
+# Cmd + F: Search the scrollback (copy mode + backward search)
+keybind = super+f=text:\x02[?
+
 # ------------------------------------------------------------------------------
 # Session Switcher (Cmd)
 # ------------------------------------------------------------------------------
 # Cmd + Shift + O: Open interactive Tmux session switcher (prefix + s)
 keybind = super+shift+o=text:\x02s
+
+# Cmd + Shift + N: New session in the current directory (prefix + C-c)
+keybind = super+shift+n=text:\x02\x03
 
 theme = Pure Black Vivid
 mouse-hide-while-typing = true

@@ -409,6 +409,11 @@ bind -n C-l if-shell 'ps -o state= -o comm= -t "#{pane_tty}" | grep -iqE "^[^TXZ
 # <prefix> C-k (Cmd+K in Ghostty): clear screen and scrollback of this pane
 bind C-k send-keys C-l \; clear-history
 
+# <prefix> { / } (Cmd+Shift+Left/Right in Ghostty): move window left / right.
+# Stock { } swap panes; Oh my Tmux already has < > for that.
+bind -r "{" swap-window -d -t -1
+bind -r "}" swap-window -d -t +1
+
 # if you don't want Oh my tmux! to alter a binding, use #!important
 # bind c new-window -c '#{pane_current_path}' #!important
 
