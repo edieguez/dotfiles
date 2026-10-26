@@ -3,8 +3,8 @@
 # ==============================================================================
 
 # Every OS window attaches to session "main" or joins its group (own view of
-# the same windows). Script lives in the dotfiles tmux package.
-command = /bin/zsh -l -c "$HOME/.local/bin/tmux-main"
+# the same windows). The script sits next to this file.
+command = /bin/zsh -l -c "$HOME/.config/ghostty/tmux-main"
 
 # ------------------------------------------------------------------------------
 # Quit (Cmd + Q)

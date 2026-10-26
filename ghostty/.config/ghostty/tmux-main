@@ -7,15 +7,19 @@
 # job (own coalition, see ~/.config/tmux/tmux-server.plist), started here on
 # demand. "tmux -D" keeps the server alive with zero sessions.
 tmux=/opt/homebrew/bin/tmux
-plist=$HOME/.config/tmux/tmux-server.plist
+plist=$HOME/.config/tmux/tmux-server.plist   # from the dotfiles tmux package
 
 if ! $tmux ls >/dev/null 2>&1; then
-  launchctl bootstrap "gui/$(id -u)" "$plist" 2>/dev/null \
-    || launchctl kickstart "gui/$(id -u)/tmux-server"
-  for _ in 1 2 3 4 5 6 7 8 9 10; do
-    $tmux ls >/dev/null 2>&1 && break
-    sleep 0.2
-  done
+  if [ -f "$plist" ]; then
+    launchctl bootstrap "gui/$(id -u)" "$plist" 2>/dev/null \
+      || launchctl kickstart "gui/$(id -u)/tmux-server"
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+      $tmux ls >/dev/null 2>&1 && break
+      sleep 0.2
+    done
+  else
+    echo "tmux-main: $plist missing (stow the tmux package); the server will die when Ghostty quits" >&2
+  fi
 fi
 
 # First window: attach to session "main". Further windows: a new session in

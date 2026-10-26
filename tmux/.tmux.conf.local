@@ -391,7 +391,7 @@ set -gu prefix2
 unbind C-a
 
 # Ghostty opens each OS window as a session in the "main" group (see
-# ~/.local/bin/tmux-main). Extra grouped sessions are destroyed on detach.
+# ~/.config/ghostty/tmux-main). Extra grouped sessions are destroyed on detach.
 set -g destroy-unattached keep-last
 
 # The server runs under launchd with a bare environment; copy these from the

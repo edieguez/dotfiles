@@ -5,7 +5,7 @@
   <!-- The tmux server as a launchd job, so it lives in its own process
        coalition. macOS 27 sends SIGTERM to everything in Ghostty's coalition
        about a second after Ghostty quits, which killed the server.
-       Loaded on demand by ~/.local/bin/tmux-main. -->
+       Loaded on demand by ~/.config/ghostty/tmux-main. -->
   <key>Label</key>
   <string>tmux-server</string>
   <key>ProgramArguments</key>
