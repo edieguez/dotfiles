@@ -51,6 +51,9 @@ keybind = super+shift+enter=text:\x02z
 # Cmd + W: Close current pane (prefix + x)
 keybind = super+w=text:\x02x
 
+# Cmd + K: Clear screen and scrollback of the current pane (prefix + C-k)
+keybind = super+k=text:\x02\x0b
+
 # ------------------------------------------------------------------------------
 # Session Switcher (Cmd)
 # ------------------------------------------------------------------------------

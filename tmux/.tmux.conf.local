@@ -399,6 +399,16 @@ set -g destroy-unattached keep-last
 # already in the default list).
 set -ga update-environment "LANG COLORTERM TERM_PROGRAM TERM_PROGRAM_VERSION GHOSTTY_RESOURCES_DIR GHOSTTY_BIN_DIR GHOSTTY_SHELL_FEATURES"
 
+# vim-tmux-navigator: keep Oh my Tmux's <prefix> C-l (next window) and own
+# Ctrl+L here. Neovim gets it; a shell with a pane to its right moves there;
+# otherwise it clears the screen and the scrollback.
+set -g @vim_navigator_mapping_right ""
+set -g @vim_navigator_prefix_mapping_clear_screen ""
+bind -n C-l if-shell 'ps -o state= -o comm= -t "#{pane_tty}" | grep -iqE "^[^TXZ ]+ +(\S+/)?g?\.?(view|l?n?vim?x?|fzf)(diff)?(-wrapped)?$"' { send-keys C-l } { if-shell -F '#{pane_at_right}' { send-keys C-l ; clear-history } { select-pane -R } }
+
+# <prefix> C-k (Cmd+K in Ghostty): clear screen and scrollback of this pane
+bind C-k send-keys C-l \; clear-history
+
 # if you don't want Oh my tmux! to alter a binding, use #!important
 # bind c new-window -c '#{pane_current_path}' #!important
 
