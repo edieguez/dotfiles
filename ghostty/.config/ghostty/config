@@ -1,3 +1,62 @@
+# ==============================================================================
+# Ghostty & Tmux Integration Configuration (Prefix: Ctrl+A)
+# ==============================================================================
+
+# Launch Tmux with its absolute path to bypass PATH lookup issues
+command = /bin/zsh -l -c "/opt/homebrew/bin/tmux new-session -A -s main"
+
+# ------------------------------------------------------------------------------
+# Quit (Cmd + Q)
+# ------------------------------------------------------------------------------
+# Cmd+Q is Ghostty's own quit. Each tmux client gets a hangup and detaches;
+# the server and session "main" survive, and the next launch reattaches.
+# Do not ask "process still running?" on close: tmux always is.
+confirm-close-surface = false
+
+# ------------------------------------------------------------------------------
+# Tab (Window) Navigation (Ctrl + 1 through 9)
+# ------------------------------------------------------------------------------
+keybind = ctrl+1=text:\x011
+keybind = ctrl+2=text:\x012
+keybind = ctrl+3=text:\x013
+keybind = ctrl+4=text:\x014
+keybind = ctrl+5=text:\x015
+keybind = ctrl+6=text:\x016
+keybind = ctrl+7=text:\x017
+keybind = ctrl+8=text:\x018
+keybind = ctrl+9=text:\x019
+
+# ------------------------------------------------------------------------------
+# Window Creation & Renaming (Cmd)
+# ------------------------------------------------------------------------------
+# Cmd + T: Create new Tmux window (prefix + c)
+keybind = super+t=text:\x01c
+
+# Cmd + Shift + R: Rename current Tmux window (prefix + ,)
+keybind = super+shift+r=text:\x01,
+
+# ------------------------------------------------------------------------------
+# Splits & Pane Controls (Cmd)
+# ------------------------------------------------------------------------------
+# Cmd + D: Vertical split (prefix + ")
+keybind = super+d=text:\x01"
+
+# Cmd + Shift + D: Horizontal split (prefix + %)
+keybind = super+shift+d=text:\x01%
+
+# Cmd + Shift + Enter: Toggle Pane Zoom / Fullscreen (prefix + z)
+keybind = super+shift+enter=text:\x01z
+
+# Cmd + W: Close current pane (prefix + x)
+keybind = super+w=unbind
+keybind = super+w=text:\x01x
+
+# ------------------------------------------------------------------------------
+# Session Switcher (Cmd)
+# ------------------------------------------------------------------------------
+# Cmd + Shift + O: Open interactive Tmux session switcher (prefix + s)
+keybind = super+shift+o=text:\x01s
+
 theme = Pure Black Vivid
 mouse-hide-while-typing = true
 custom-shader = ~/.config/ghostty/shaders/cursor-smear.glsl
