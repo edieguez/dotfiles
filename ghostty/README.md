@@ -1,71 +1,77 @@
 # Ghostty config
 
-My terminal setup. Built around living in nvim, yazi and markdown most of the day, not around looking impressive in a screenshot (well, mostly).
+Ghostty is only the window. Every OS window runs tmux, which owns tabs, splits and
+session persistence (see [`../tmux/README.md`](../tmux/README.md)).
 
 ## Layout
 
 ```
 ghostty/
 └── .config/ghostty/
-    ├── config     # symlinked to ~/.config/ghostty/config
+    ├── config       # symlinked to ~/.config/ghostty/config
+    ├── tmux-main    # what every window runs: attach or join session "main"
     ├── themes/
     │   └── Pure Black Vivid
-    └── shaders/   # github.com/hackr-sh/ghostty-shaders, cloned in full
+    └── shaders/
+        └── cursor-smear.glsl
 ```
+
+Install with `cd ~/.dotfiles && stow ghostty tmux`. The `tmux` package is required:
+`tmux-main` starts the tmux server from its launchd plist so the server outlives
+Ghostty (macOS 27 kills every process in an app's coalition when the app quits).
+
+## Windows and sessions
+
+The first Ghostty window attaches to tmux session `main`. Every further window
+creates a new session in the `main` group: same windows, own current window and
+scroll position. Those extra sessions are destroyed when their window closes.
+
+Cmd+Q is Ghostty's own quit. The tmux server and all its windows survive; the
+next launch reattaches. `confirm-close-surface` is off because tmux is always
+"still running".
+
+## Shortcuts
+
+All of these send a tmux key sequence (prefix is Ctrl+B). Default macOS Ghostty
+bindings that are not listed here still work.
+
+| Key | tmux | Does what |
+|---|---|---|
+| `ctrl+1..9` | `<prefix> 1..9` | go to window N |
+| `cmd+[` / `cmd+]` | `<prefix> C-h` / `C-l` | previous / next window |
+| `ctrl+tab` | `<prefix> Tab` | last window |
+| `cmd+shift+←` / `→` | `<prefix> {` / `}` | move window left / right |
+| `cmd+t` | `<prefix> c` | new window |
+| `cmd+shift+r` | `<prefix> ,` | rename window |
+| `cmd+d` / `cmd+shift+d` | `<prefix> "` / `%` | split below / right |
+| `cmd+shift+enter` | `<prefix> z` | zoom / unzoom pane |
+| `cmd+w` | `<prefix> x` | close pane (asks) |
+| `cmd+k` | `<prefix> C-k` | clear screen and scrollback |
+| `cmd+f` | `<prefix> [ ?` | search the scrollback |
+| `cmd+shift+o` | `<prefix> s` | session switcher |
+| `cmd+shift+n` | `<prefix> C-c` | new session |
+
+`ctrl+h/j/k/l` move between tmux panes and Neovim windows alike
+(vim-tmux-navigator). `ctrl+l` in a shell with no pane to its right clears the
+screen instead.
 
 ## Font
 
-[JetBrains Mono](https://www.jetbrains.com/lp/mono/) at `12.5pt`. If it's missing:
+[JetBrains Mono](https://www.jetbrains.com/lp/mono/) at `12.5pt`, thickened,
+with 6% extra line height. If it's missing:
 
 ```sh
 brew install --cask font-jetbrains-mono
 ```
 
-## Theme
+## Theme and shader
 
-`Pure Black Vivid` — true black background, saturated ANSI colors. It's a custom theme file in [`themes/`](.config/ghostty/themes/Pure%20Black%20Vivid), not one of Ghostty's bundled ones.
+`Pure Black Vivid` is a custom theme in [`themes/`](.config/ghostty/themes/Pure%20Black%20Vivid):
+true black background, saturated ANSI colors. `custom-shader` points at
+[`cursor-smear.glsl`](.config/ghostty/shaders/cursor-smear.glsl), which trails the
+cursor when it jumps.
 
-## Shader
+## Keyboard
 
-`custom-shader` points at [`dither.glsl`](.config/ghostty/shaders/dither.glsl) from [hackr-sh/ghostty-shaders](https://github.com/hackr-sh/ghostty-shaders). That repo is cloned whole into `shaders/`, so switching looks is just pointing `custom-shader` at a different `.glsl` in there.
-
-## Splits & navigation
-
-Most of this is just Ghostty's own macOS defaults — no point overriding what already works:
-
-| Key | Does what |
-|---|---|
-| `cmd+d` / `cmd+shift+d` | new split, right / down |
-| `cmd+alt+←↑↓→` | move between splits |
-| `cmd+ctrl+←↑↓→` | resize the focused split |
-| `cmd+ctrl+=` | equalize split sizes |
-| `cmd+shift+enter` | zoom / unzoom the split |
-| `cmd+shift+↑` / `↓` | jump to previous / next shell prompt |
-
-`ctrl+h/j/k/l` is deliberately left unbound here — those keys are for Neovim's own
-window navigation. Ghostty has no multiplexer-aware integration for them (no
-plugin bridges Ghostty splits and Neovim windows on the same keys), so binding
-them at the Ghostty level just steals the keystroke before Neovim ever sees it.
-
-## Quick terminal
-
-`cmd+` `` ` `` drops a floating terminal down from the top of the screen, Quake-style, from any app. macOS will ask for Accessibility access the first time — that's normal, not a bug.
-
-## Shell integration
-
-`cursor,sudo,title,path`:
-
-- cursor changes shape at the prompt
-- `sudo` doesn't break terminfo
-- window title follows whatever the shell is doing
-- Ghostty's own CLI stays on `PATH` even if some init script stomps on it
-
-## Window
-
-- `window-save-state = always` — splits and tabs come back after a restart
-- `8px` padding so text isn't glued to the edges
-- `background-opacity 0.96` + blur, titlebar folded into the tab bar instead of sitting on top of it
-
-## Left alone on purpose
-
-Didn't bother configuring image previews, clickable links, or sane double-click word/path selection — Ghostty already does all of that by default, which covers yazi's image preview and most of what markdown writing needs day to day.
+`macos-option-as-alt = right`: the right Option key is Alt (Meta) for the terminal,
+the left one keeps typing macOS special characters.
