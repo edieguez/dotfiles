@@ -29,3 +29,9 @@ would die with it. To stop the job: `launchctl bootout gui/$(id -u)/tmux-server`
 
 The Ghostty shortcuts that drive these are listed in
 [`../ghostty/README.md`](../ghostty/README.md).
+
+## Status bar
+
+The right side shows the weather from [wttr.in](https://wttr.in) via `.config/tmux/weather.sh`,
+which caches the answer for 30 minutes in `~/.cache/tmux-weather`. Location is guessed from
+the IP address; to pin it: `tmux set-environment -g WTTR_LOCATION Mexico+City`.
