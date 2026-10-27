@@ -36,9 +36,9 @@ keybind = super+]=text:\x02\x0c
 # Ctrl + Tab: Last window (prefix + Tab)
 keybind = ctrl+tab=text:\x02\x09
 
-# Cmd + Shift + Left / Right: Move current window left / right (prefix + { / })
-keybind = super+shift+left=text:\x02{
-keybind = super+shift+right=text:\x02}
+# Cmd + Shift + H / L: Move current window left / right (prefix + { / }), vim-style
+keybind = super+shift+h=text:\x02{
+keybind = super+shift+l=text:\x02}
 
 # ------------------------------------------------------------------------------
 # Window Creation & Renaming (Cmd)

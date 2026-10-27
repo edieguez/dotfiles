@@ -40,7 +40,7 @@ bindings that are not listed here still work.
 | `cmd+1..9` | `<prefix> 1..9` | go to window N |
 | `cmd+[` / `cmd+]` | `<prefix> C-h` / `C-l` | previous / next window |
 | `ctrl+tab` | `<prefix> Tab` | last window |
-| `cmd+shift+←` / `→` | `<prefix> {` / `}` | move window left / right |
+| `cmd+shift+h` / `l` | `<prefix> {` / `}` | move window left / right |
 | `cmd+t` | `<prefix> c` | new window |
 | `cmd+shift+r` | `<prefix> ,` | rename window |
 | `cmd+d` / `cmd+shift+d` | `<prefix> "` / `%` | split below / right |
