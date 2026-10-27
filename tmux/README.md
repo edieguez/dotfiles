@@ -17,8 +17,8 @@ would die with it. To stop the job: `launchctl bootout gui/$(id -u)/tmux-server`
 
 - Prefix is Ctrl+B only. Ctrl+A is "line start" in zsh and "increment" in Neovim.
 - `mode-keys vi`, 50000 lines of history.
-- Plugins (installed by tpm on first start): tmux-resurrect and tmux-continuum
-  (sessions saved every 15 min and restored on server start), vim-tmux-navigator.
+- One plugin, installed by tpm on first start: vim-tmux-navigator. Sessions are
+  not saved across reboots; the launcher just creates a fresh `main`.
 
 | Key | Does what |
 |---|---|
