@@ -13,6 +13,14 @@ job (`.config/tmux/tmux-server.plist`). macOS 27 kills every process in an app's
 coalition shortly after the app quits, so a server started from Ghostty's shell
 would die with it. To stop the job: `launchctl bootout gui/$(id -u)/tmux-server`.
 
+After `brew upgrade tmux` the old server keeps running in memory while new clients use
+the new binary, which can misbehave. Restart it (this kills every session; the next
+Ghostty window creates a fresh `main`):
+
+```sh
+launchctl kickstart -k gui/$(id -u)/tmux-server
+```
+
 ## Changes on top of Oh my Tmux
 
 - Prefix is Ctrl+B only. Ctrl+A is "line start" in zsh and "increment" in Neovim.
