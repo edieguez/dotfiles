@@ -268,8 +268,7 @@ tmux_conf_theme_right_separator_sub='\uE0B3'  #   PowerlineSymbols.otf font, see
 #     - #{username}
 #     - #{username_ssh}
 tmux_conf_theme_status_left=" ❐ #S | ↑#{?uptime_y, #{uptime_y}y,}#{?uptime_d, #{uptime_d}d,}#{?uptime_h, #{uptime_h}h,}#{?uptime_m, #{uptime_m}m,} "
-#tmux_conf_theme_status_left=" ❐ #S | ↑#{?uptime_y, #{uptime_y}y,}#{?uptime_d, #{uptime_d}d,}#{?uptime_h, #{uptime_h}h,}#{?uptime_m, #{uptime_m}m,} | #{pretty_pane_current_path} "
-tmux_conf_theme_status_right=" #{prefix}#{mouse}#{pairing}#{synchronized}#{?battery_status,#{battery_status},}#{?battery_bar, #{battery_bar},}#{?battery_percentage, #{battery_percentage},} , #(~/.config/tmux/weather.sh) , %R , %d %b#{root} "
+tmux_conf_theme_status_right=" #{prefix}#{mouse}#{pairing}#{synchronized}#{?battery_status,#{battery_status},}#{?battery_bar, #{battery_bar},}#{?battery_percentage, #{battery_percentage},} , #(~/.config/tmux/weather.sh) , %R , %a %d %b %Y#{root} "
 
 # status left style
 tmux_conf_theme_status_left_fg="$tmux_conf_theme_colour_6,$tmux_conf_theme_colour_7,$tmux_conf_theme_colour_8"
@@ -408,6 +407,15 @@ bind -n C-l if-shell 'ps -o state= -o comm= -t "#{pane_tty}" | grep -iqE "^[^TXZ
 
 # <prefix> C-k (Cmd+K in Ghostty): clear screen and scrollback of this pane
 bind C-k send-keys C-l \; clear-history
+
+# Mouse (on by default since tmux 3.8): select without copying. A drag, double
+# click or triple click only highlights; y or Enter copies to the clipboard.
+# Cmd+click opens URLs, Shift+click bypasses tmux for a native Ghostty selection.
+unbind -T copy-mode-vi MouseDragEnd1Pane
+bind -T root DoubleClick1Pane select-pane -t = \; if-shell -F "#{||:#{pane_in_mode},#{mouse_any_flag}}" { send-keys -M } { copy-mode -H ; send-keys -X select-word }
+bind -T root TripleClick1Pane select-pane -t = \; if-shell -F "#{||:#{pane_in_mode},#{mouse_any_flag}}" { send-keys -M } { copy-mode -H ; send-keys -X select-line }
+bind -T copy-mode-vi DoubleClick1Pane select-pane \; send-keys -X select-word
+bind -T copy-mode-vi TripleClick1Pane select-pane \; send-keys -X select-line
 
 # <prefix> { / } (Cmd+Shift+H/L in Ghostty): move window left / right.
 # Stock { } swap panes; Oh my Tmux already has < > for that.
