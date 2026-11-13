@@ -113,3 +113,5 @@
 
 ralt - f4 : ~/.zsh/zsh-config/bin/macos/bt-toggle.sh
 ctrl + shift - escape : open -a "Activity Monitor"
+# toggle HRM: launch it, or quit it if it is already running
+cmd + ctrl - h : pgrep -xq HRM && osascript -e 'tell application id "com.wontaeyang.HRM" to quit' || open -b com.wontaeyang.HRM
