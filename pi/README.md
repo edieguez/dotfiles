@@ -14,6 +14,9 @@ Configuration for the [Pi coding agent](https://pi.dev), stowed into
   - `protected-paths.ts`: blocks file tools on secrets, `.git/` and
     `node_modules/`.
   - `git-checkpoint.ts`: restores code when using `/fork`.
+  - `status-footer.ts`: clearer footer with classifier activity (`/footer`).
+  - `model-router.ts`: `router/auto` picks Opus, Sonnet or Copilot per task
+    with the free classifier; `/route` forces a level.
   - `plan-mode`, `subagent`: links to Pi's bundled examples (Homebrew).
 - `agents/`, `prompts/`: links to the subagent example's agents and prompts.
 

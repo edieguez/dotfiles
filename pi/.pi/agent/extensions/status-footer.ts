@@ -19,8 +19,9 @@
  *   PI_FOOTER_BUDGET  session budget in USD for billed usage (default 1)
  *
  * `/footer` switches between this footer and the built-in one.
- * Limitation: classifier calls made directly by extensions
- * (ctx.modelRegistry.classify) are not visible to other extensions.
+ * Classifier calls made directly by extensions are shown when the extension
+ * reports them on pi.events (`classifier:start` / `classifier:end`), as
+ * model-router.ts does; other direct calls are not visible.
  */
 
 import { readFileSync } from "node:fs";
@@ -360,6 +361,23 @@ export default function (pi: ExtensionAPI) {
 		lastBlock = { reason: String((data as { reason?: string })?.reason ?? "action"), at: Date.now() };
 		renderLater(BLOCK_VISIBLE_MS);
 		render();
+	});
+
+	// Event bus: classifier calls made directly by extensions (e.g. model-router).
+	pi.events.on("classifier:start", (data) => {
+		const d = data as { id?: string; model?: string };
+		if (!d?.id) return;
+		running.set(d.id, [{ name: "models.classify", args: String(d.model ?? "classifier"), status: "running" }]);
+		updateTicker();
+	});
+	pi.events.on("classifier:end", (data) => {
+		const d = data as { id?: string; status?: string; cost?: number; durationMs?: number };
+		if (!d?.id) return;
+		running.delete(d.id);
+		lastRun = { calls: 1, errors: d.status === "error" ? 1 : 0, cost: d.cost ?? 0, ms: d.durationMs ?? 0 };
+		lastRunAt = Date.now();
+		renderLater(DONE_VISIBLE_MS);
+		updateTicker();
 	});
 
 	pi.on("session_start", async (_event, ctx) => {
