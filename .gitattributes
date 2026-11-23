@@ -1,0 +1,2 @@
+# Strip the version fields Pi writes itself (filter set up in pi/README.md)
+pi/.pi/agent/settings.json filter=pi-settings

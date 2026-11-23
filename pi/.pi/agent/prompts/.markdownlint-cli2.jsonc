@@ -1,0 +1,2 @@
+// Prompt templates start with the prompt text, not a heading.
+{ "config": { "MD041": false } }

@@ -19,12 +19,22 @@ Configuration for the [Pi coding agent](https://pi.dev), stowed into
     with the free classifier; `/route` forces a level.
   - `plan-mode`, `subagent`: links to Pi's bundled examples (Homebrew).
 - `agents/`, `prompts/`: links to the subagent example's agents and prompts.
+- `prompts/commit.md`, `prompts/review.md`: `/commit` proposes a commit in
+  the repository's style and commits only after approval (never pushes);
+  `/review` reviews uncommitted changes or a range without editing.
 
 ## Not versioned
 
 These stay only in `~/.pi/agent/` because they are secret, personal or
 generated: `auth.json`, `sessions/`, `memory/`, `models-store.json`, `npm/`.
 The root `.gitignore` also excludes them in case they end up in the package.
+
+Skills live in `~/.agents/skills/`, outside this package:
+
+- `rex`: a stub installed by `rex skill setup`; reinstall it with that
+  command.
+- `whatsapp`: contains personal data, so it is not versioned yet. Back it up
+  separately until it is made generic.
 
 ## Setup on a new machine
 
@@ -39,3 +49,14 @@ rex skill setup                      # Rex skill for agents (optional)
 Pi writes `settings.json` and `mcp.json` in place, so changes made with
 `/settings`, `pi install` or `pi mcp add` go through the symlinks into this
 repository. Review them with `git diff` before committing.
+
+Pi also records its own version fields in `settings.json`
+(`lastChangelogVersion`, `extensionChangelogVersions`). A git filter in the
+root `.gitattributes` leaves them out of diffs and commits; the file on disk
+keeps them. The filter is not versioned, so set it up once per clone:
+
+```sh
+git config filter.pi-settings.clean \
+  "jq 'del(.lastChangelogVersion, .extensionChangelogVersions)'"
+git config filter.pi-settings.smudge cat
+```
