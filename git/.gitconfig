@@ -2,8 +2,10 @@
     email = dieguezemmanuel@gmail.com
     name = edieguez
 
-[credential]
-	helper = store
+[credential "https://github.com"]
+	# gh keeps its token in the Keychain; the empty line drops other helpers here.
+	helper =
+	helper = !gh auth git-credential
 
 [pull]
 	rebase = true
