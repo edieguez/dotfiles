@@ -2,3 +2,12 @@
 hammerspoon/.hammerspoon/config.lua
 /yazi/.config/yazi/plugins
 /lazygit/Library/Application Support/lazygit/state.yml
+
+# Pi: secrets, personal data and generated files (never commit)
+/pi/.pi/agent/auth.json
+/pi/.pi/agent/sessions/
+/pi/.pi/agent/memory/
+/pi/.pi/agent/models-store.json
+/pi/.pi/agent/npm/
+/pi/.pi/agent/tmp/
+/pi/.pi/agent/*.lock

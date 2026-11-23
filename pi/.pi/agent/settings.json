@@ -1,0 +1,11 @@
+{
+  "lastChangelogVersion": "1.6.0",
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-opus-5-5",
+  "defaultTools": [
+    "+codemode"
+  ],
+  "packages": [
+    "npm:pi-memory"
+  ]
+}
