@@ -20,6 +20,10 @@ const RULES: { label: string; pattern: RegExp }[] = [
 ];
 
 export default function (pi: ExtensionAPI) {
+	// Announce to the status footer (shared event bus); answer its ping too.
+	const announce = () => pi.events.emit("safety:active", { name: "permission-gate" });
+	pi.on("session_start", async () => announce());
+	pi.events.on("safety:ping", announce);
 	pi.on("tool_call", async (event, ctx) => {
 		if (event.toolName !== "bash") return undefined;
 
@@ -28,6 +32,7 @@ export default function (pi: ExtensionAPI) {
 		if (matched.length === 0) return undefined;
 
 		if (!ctx.hasUI) {
+			pi.events.emit("safety:blocked", { name: "permission-gate", reason: matched.join(", ") });
 			return { block: true, reason: `Risky command blocked (${matched.join(", ")}); no UI to confirm` };
 		}
 
@@ -36,6 +41,7 @@ export default function (pi: ExtensionAPI) {
 			"No",
 		]);
 		if (choice !== "Yes") {
+			pi.events.emit("safety:blocked", { name: "permission-gate", reason: matched.join(", ") });
 			return { block: true, reason: "Blocked by user" };
 		}
 		return undefined;

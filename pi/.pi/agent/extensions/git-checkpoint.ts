@@ -22,6 +22,10 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 const MAX_CHECKPOINTS = 200;
 
 export default function (pi: ExtensionAPI) {
+	// Announce to the status footer (shared event bus); answer its ping too.
+	const announce = () => pi.events.emit("safety:active", { name: "git-checkpoint" });
+	pi.on("session_start", async () => announce());
+	pi.events.on("safety:ping", announce);
 	const checkpoints = new Map<string, string>();
 
 	async function git(cwd: string, args: string[]) {

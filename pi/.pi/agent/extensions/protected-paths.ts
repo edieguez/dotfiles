@@ -43,6 +43,10 @@ function isSecret(path: string): boolean {
 }
 
 export default function (pi: ExtensionAPI) {
+	// Announce to the status footer (shared event bus); answer its ping too.
+	const announce = () => pi.events.emit("safety:active", { name: "protected-paths" });
+	pi.on("session_start", async () => announce());
+	pi.events.on("safety:ping", announce);
 	pi.on("tool_call", async (event, ctx) => {
 		const tool = event.toolName;
 		if (tool !== "read" && tool !== "write" && tool !== "edit") return undefined;
@@ -60,6 +64,7 @@ export default function (pi: ExtensionAPI) {
 		if (!reason) return undefined;
 
 		if (ctx.hasUI) ctx.ui.notify(`Blocked: ${reason}`, "warning");
+		pi.events.emit("safety:blocked", { name: "protected-paths", reason: `protected ${basename(path)}` });
 		return { block: true, reason };
 	});
 }
