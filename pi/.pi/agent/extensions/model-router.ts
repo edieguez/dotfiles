@@ -11,6 +11,7 @@
  *   goes to the hard model.
  * - Private folders (default: ~/Documents/journal) never call the classifier
  *   and use the hard model, so private text is not sent to a free model.
+ *   Symlinks are resolved, so a journal opened through a link counts too.
  * - Tool follow-ups and retries stay on the model that handled the turn
  *   (keeps the prompt cache). Within a session the level only goes up; start a
  *   new session or use `/route` to go down.
@@ -25,8 +26,9 @@
  * Usage: /model router/auto
  */
 
+import { realpathSync } from "node:fs";
 import { homedir } from "node:os";
-import { resolve, sep } from "node:path";
+import { basename, dirname, join, resolve, sep } from "node:path";
 import type { Message } from "@earendil-works/pi-ai";
 import type { ExtensionAPI, ExtensionContext, ModelRoute, ModelRouteRequest } from "@earendil-works/pi-coding-agent";
 
@@ -60,9 +62,26 @@ const PRIVATE = (process.env.PI_ROUTER_PRIVATE || `${HOME}/Documents/journal`)
 	.filter(Boolean)
 	.map((p) => resolve(p.startsWith("~/") ? HOME + p.slice(1) : p));
 
+/** Resolves symlinks; for a missing path, resolves its nearest existing parent. */
+function real(p: string): string {
+	const rest: string[] = [];
+	let dir = p;
+	while (true) {
+		try {
+			return join(realpathSync(dir), ...rest.reverse());
+		} catch {
+			const parent = dirname(dir);
+			if (parent === dir) return p;
+			rest.push(basename(dir));
+			dir = parent;
+		}
+	}
+}
+
 export function isPrivate(cwd: string): boolean {
-	const dir = resolve(cwd);
-	return PRIVATE.some((p) => dir === p || dir.startsWith(p + sep));
+	const dirs = [resolve(cwd), real(resolve(cwd))];
+	const roots = [...PRIVATE, ...PRIVATE.map(real)];
+	return dirs.some((dir) => roots.some((p) => dir === p || dir.startsWith(p + sep)));
 }
 
 const higher = (a: Tier, b: Tier): Tier => (ORDER.indexOf(a) >= ORDER.indexOf(b) ? a : b);

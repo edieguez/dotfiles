@@ -118,12 +118,14 @@ export default function (pi: ExtensionAPI) {
 	let usageKey = "";
 	let usage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, billed: 0, cacheHit: undefined as number | undefined };
 	let routed: string | undefined;
+	/** Provider and model of the latest response (the routed model under a virtual model). */
+	let answered: { provider: string; model: string } | undefined;
 	const subscription = new Map<string, boolean>();
 
 	// One timer drives the spinner and the elapsed time; it runs only when needed.
 	let frame = 0;
 	let ticker: ReturnType<typeof setInterval> | undefined;
-	const timers: ReturnType<typeof setTimeout>[] = [];
+	const timers = new Set<ReturnType<typeof setTimeout>>();
 
 	const classifierRows = () => [...running.values()].flat().filter((r) => r.name === "models.classify");
 	const classifierActive = () => classifierRows().some((r) => r.status === "running");
@@ -144,7 +146,11 @@ export default function (pi: ExtensionAPI) {
 
 	/** Re-render once after a temporary message expires. */
 	function renderLater(ms: number) {
-		timers.push(setTimeout(render, ms + 50));
+		const t = setTimeout(() => {
+			timers.delete(t);
+			render();
+		}, ms + 50);
+		timers.add(t);
 	}
 
 	async function refreshGit(ctx: ExtensionContext) {
@@ -225,6 +231,7 @@ export default function (pi: ExtensionAPI) {
 		}
 		usage = u;
 		routed = last && ctx.model && last.model !== ctx.model.id ? last.model : undefined;
+		answered = last ? { provider: last.provider, model: last.model } : undefined;
 	}
 
 	function renderFooter(width: number, theme: Theme): string[] {
@@ -274,7 +281,12 @@ export default function (pi: ExtensionAPI) {
 				? theme.fg("muted", `? / ${fmtTokens(cu?.contextWindow ?? model?.contextWindow ?? 0)}`)
 				: theme.fg(color, `${pct.toFixed(0)}%`) +
 					theme.fg("muted", ` · ${fmtTokens(cu?.tokens ?? 0)} / ${fmtTokens(cu?.contextWindow ?? 0)}`);
-		const sub = model ? ctx.modelRegistry.isUsingOAuth(model) : false;
+		// Billing follows the model that answered last (the routed one under router/auto).
+		const sub = answered
+			? isSubscription(ctx, answered.provider, answered.model)
+			: model
+				? ctx.modelRegistry.isUsingOAuth(model)
+				: false;
 		const costColor = usage.billed >= BUDGET * 2 ? "error" : usage.billed >= BUDGET ? "warning" : "text";
 		const billedNote =
 			sub && usage.billed > 0 ? theme.fg(costColor === "text" ? "muted" : costColor, ` · billed ${fmtCost(usage.billed)}`) : "";
@@ -443,7 +455,8 @@ export default function (pi: ExtensionAPI) {
 	pi.on("session_shutdown", async () => {
 		if (ticker) clearInterval(ticker);
 		ticker = undefined;
-		for (const t of timers.splice(0)) clearTimeout(t);
+		for (const t of timers) clearTimeout(t);
+		timers.clear();
 	});
 
 	pi.registerCommand("footer", {

@@ -12,9 +12,12 @@
  * - Restore replaces tracked files with the snapshot (`git restore`) instead of
  *   merging it (`git stash apply`), and first saves the current state to the
  *   stash list so the restore can be undone.
+ * - Restore covers the whole repository (`:/`), not only the folder pi runs in.
  *
  * Limitations: only inside a git repository; untracked files are neither
- * captured nor deleted; checkpoints live in memory (lost when pi exits).
+ * captured nor deleted; checkpoints live in memory (lost when pi exits); after
+ * a restore the index matches the snapshot's files, so the earlier split
+ * between staged and unstaged changes is not kept.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -74,7 +77,7 @@ export default function (pi: ExtensionAPI) {
 			await git(ctx.cwd, ["stash", "store", "-m", "pi git-checkpoint: before restore", current]);
 		}
 
-		const restore = await git(ctx.cwd, ["restore", `--source=${ref}`, "--staged", "--worktree", "--", "."]);
+		const restore = await git(ctx.cwd, ["restore", `--source=${ref}`, "--staged", "--worktree", "--", ":/"]);
 		if (restore.code === 0) {
 			const undo = current ? " Previous state saved in `git stash list`." : "";
 			ctx.ui.notify(`Code restored to checkpoint ${ref.slice(0, 8)}.${undo}`, "info");
