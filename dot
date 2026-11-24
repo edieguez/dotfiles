@@ -1,0 +1,479 @@
+# dot: GNU Stow wrapper for this repository. Rules live in dot.conf.
+# Run `./dot help` for usage.
+#
+# Safety: every stow call is simulated first, and the plan is checked before
+# anything changes. Each link must point to the same path inside the named
+# package (so a bad argument can never link the repository itself into ~),
+# and no file excluded by dot.conf may be linked. Use -n to only show plans.
+#
+# DOT_TARGET overrides the target folder (default: $HOME); used for testing.
+
+emulate zsh
+setopt extended_glob typeset_silent pipe_fail no_unset
+
+DOTFILES=${0:A:h}
+CONF=$DOTFILES/dot.conf
+TARGET=${${DOT_TARGET:-$HOME}:A}
+DRY_RUN=0
+VERBOSE=0
+
+if [[ -t 1 ]]; then
+  RED=$'\e[31m' GREEN=$'\e[32m' YELLOW=$'\e[33m' CYAN=$'\e[36m' BOLD=$'\e[1m' RESET=$'\e[0m'
+else
+  RED= GREEN= YELLOW= CYAN= BOLD= RESET=
+fi
+
+die()  { print -ru2 -- "${RED}error:${RESET} $*"; exit 1 }
+warn() { print -ru2 -- "${YELLOW}warning:${RESET} $*" }
+info() { print -r -- "${CYAN}::${RESET} $*" }
+
+# ---------------------------------------------------------------------------
+# dot.conf
+# ---------------------------------------------------------------------------
+typeset -gA PKG_OS PKG_ONLY PKG_EXCEPT
+
+parse_conf() {
+  [[ -f $CONF ]] || return 0
+  local line pkg= key= value n=0
+  while IFS= read -r line || [[ -n $line ]]; do
+    (( n++ ))
+    line=${line%%\#*}
+    line=${line%%[[:space:]]#}
+    [[ -z $line ]] && continue
+
+    if [[ $line == \[[A-Za-z0-9_-]##\] ]]; then
+      pkg=${${line#\[}%\]} key=
+      [[ -d $DOTFILES/$pkg ]] || warn "dot.conf:$n: no package folder '$pkg'"
+      continue
+    fi
+
+    # Continuation line: one more pattern for the previous only/except key.
+    if [[ $line == [[:space:]]##[^=]## ]]; then
+      [[ -n $pkg && $key == (only|except) ]] || die "dot.conf:$n: unexpected indented line"
+      add_pattern $pkg $key ${line##[[:space:]]##}
+      continue
+    fi
+
+    if [[ $line == (#b)([a-z]##)[[:space:]]#=[[:space:]]#(*) ]]; then
+      key=$match[1] value=$match[2]
+      [[ -n $pkg ]] || die "dot.conf:$n: '$key' outside a [package] section"
+      case $key in
+        os) [[ $value == (macos|linux|all) ]] || die "dot.conf:$n: os must be macos, linux or all"
+            PKG_OS[$pkg]=$value ;;
+        only|except) add_pattern $pkg $key $value ;;
+        *) die "dot.conf:$n: unknown key '$key'" ;;
+      esac
+      continue
+    fi
+
+    die "dot.conf:$n: cannot parse: $line"
+  done < $CONF
+}
+
+# One pattern per line; patterns may contain spaces.
+add_pattern() {
+  [[ -n $3 ]] || return 0
+  if [[ $2 == only ]]; then PKG_ONLY[$1]+="$3"$'\n'; else PKG_EXCEPT[$1]+="$3"$'\n'; fi
+}
+
+# ---------------------------------------------------------------------------
+# Packages and files
+# ---------------------------------------------------------------------------
+current_os() {
+  case $(uname -s) in
+    Darwin) print macos ;;
+    Linux)  print linux ;;
+    *)      print unknown ;;
+  esac
+}
+OS=$(current_os)
+
+pkg_for_os() { [[ ${PKG_OS[$1]:-all} == (all|$OS) ]] }
+
+all_packages() { local d; for d in $DOTFILES/*(N/); print -r -- ${d:t} }
+
+# Fails hard on anything that is not an existing package folder name.
+check_pkg_name() {
+  [[ -n ${1:-} ]] || die "empty package name"
+  [[ $1 == [A-Za-z0-9_-]## ]] || die "invalid package name: '$1'"
+}
+check_pkg() {
+  check_pkg_name ${1:-}
+  [[ -d $DOTFILES/$1 ]] || die "no such package: $1"
+}
+
+# Files and symlinks of a package, relative to its root.
+pkg_files() {
+  (cd $DOTFILES/$1 && find . \( -type f -o -type l \) -print) | sed 's|^\./||' | LC_ALL=C sort
+}
+
+# Stow's built-in ignore list (used when there is no .stow-local-ignore).
+stow_ignores() {
+  local rel=$1 base=${1:t}
+  [[ $rel != */* && $rel == (README*|LICENSE*|COPYING) ]] && return 0
+  [[ $base == (.gitignore|.gitmodules|.cvsignore|*~|\#*\#|.\#?*|*,v) ]] && return 0
+  [[ /$rel/ == */(.git|.hg|.svn|CVS|RCS|_darcs)/* ]] && return 0
+  return 1
+}
+
+# How dot.conf and stow treat one file: wanted | excluded | stow-ignored
+file_rule() {
+  local pkg=$1 rel=$2 pat
+  local -a only=( ${(f)PKG_ONLY[$pkg]:-} ) except=( ${(f)PKG_EXCEPT[$pkg]:-} )
+  if stow_ignores $rel; then print stow-ignored; return; fi
+  if (( $#only )); then
+    local hit=0
+    for pat in $only; [[ $rel == ${~pat} ]] && { hit=1; break }
+    (( hit )) || { print excluded; return }
+  fi
+  for pat in $except; [[ $rel == ${~pat} ]] && { print excluded; return }
+  print wanted
+}
+
+# Fills WANTED, EXCLUDED and STOW_IGNORED for a package.
+select_files() {
+  local pkg=$1 f
+  typeset -ga WANTED=() EXCLUDED=() STOW_IGNORED=()
+  for f in ${(f)"$(pkg_files $pkg)"}; do
+    case $(file_rule $pkg $f) in
+      wanted)   WANTED+=$f ;;
+      excluded) EXCLUDED+=$f ;;
+      *)        STOW_IGNORED+=$f ;;
+    esac
+  done
+  local pat
+  local -a all=( ${(f)"$(pkg_files $pkg)"} ) hits
+  for pat in ${(f)PKG_ONLY[$pkg]:-} ${(f)PKG_EXCEPT[$pkg]:-}; do
+    hits=( ${(M)all:#${~pat}} )
+    (( $#hits )) || warn "$pkg: pattern '$pat' matches no file"
+  done
+}
+
+# Escape a path for a Perl regex.
+re_escape() { print -r -- "${1//(#m)[^A-Za-z0-9\/_-]/\\$MATCH}" }
+
+# State of one wanted file in the target: linked | missing | blocked | elsewhere
+file_state() {
+  local t=$TARGET/$2 s=$DOTFILES/$1/$2
+  if [[ -e $t || -L $t ]]; then
+    [[ ${t:A} == ${s:A} ]] && { print linked; return }
+    [[ -L $t ]] && { print elsewhere; return }
+    print blocked
+  else
+    print missing
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Stow with a checked plan
+# ---------------------------------------------------------------------------
+# owner_of <absolute source> <dst>: prints the package P when source is
+# exactly $DOTFILES/P/<dst> for an existing package folder P.
+owner_of() {
+  local src=$1 dst=$2 p
+  [[ $src == $DOTFILES/*/$dst ]] || return 1
+  p=${${src#$DOTFILES/}%%/*}
+  [[ $p == [A-Za-z0-9_-]## && -d $DOTFILES/$p && $src == $DOTFILES/$p/$dst ]] || return 1
+  print -r -- $p
+}
+
+# verify_plan <pkg> <plan>: every LINK must map target X to P/X for a package
+# P (the named one, or another package whose folder stow unfolds), every
+# UNLINK must remove such a link, and no file excluded in dot.conf for the
+# owning package may be linked.
+verify_plan() {
+  local pkg=$1 plan=$2 line dst src resolved ok=1 ex owner f
+  local -A planned=()   # links this plan creates (already checked)
+  for line in ${(f)plan}; do
+    # Stow marks steps that undo an earlier step of the same plan.
+    line=${line% \(reverts previous action\)}
+    case $line in
+      LINK:\ *)
+        if [[ $line != (#b)LINK:\ (*)\ =\>\ (*) ]]; then
+          warn "unexpected stow output: $line"; ok=0; continue
+        fi
+        dst=$match[1] src=$match[2]
+        resolved=${${:-$TARGET/${dst:h}/$src}:a}
+        if ! owner=$(owner_of $resolved $dst); then
+          warn "refusing: stow would link '$dst' to '$resolved' (not <package>/$dst)"; ok=0; continue
+        fi
+        for f in ${(f)"$(pkg_files $owner)"}; do
+          [[ $f == $dst || $f == $dst/* ]] || continue
+          if [[ $(file_rule $owner $f) == excluded ]]; then
+            warn "refusing: stow would link '$owner/$f', which dot.conf excludes"; ok=0
+          fi
+        done
+        planned[$dst]=1 ;;
+      UNLINK:\ *)
+        dst=${line#UNLINK: }
+        (( ${+planned[$dst]} )) && { unset "planned[$dst]"; continue }
+        resolved=$TARGET/$dst
+        # Compare the link text: the package file may itself be a symlink (e.g. into Homebrew).
+        src=$(/usr/bin/readlink -- $resolved 2>/dev/null)
+        resolved=${${:-$TARGET/${dst:h}/$src}:a}
+        if ! owner_of $resolved $dst >/dev/null; then
+          warn "refusing: stow would remove '$dst', which is not a link into a package"; ok=0
+        fi ;;
+      MKDIR:\ *|RMDIR\ *|RMDIR:\ *|WARNING:\ in\ simulation*) ;;
+      *) warn "unexpected stow output: $line"; ok=0 ;;
+    esac
+  done
+  (( ok ))
+}
+
+# run_stow <stow|unstow> <pkg>: simulate, verify, show, then apply (unless -n).
+run_stow() {
+  local mode=$1 pkg=$2 f plan
+  check_pkg $pkg
+  select_files $pkg
+  local -a args=( --dir=$DOTFILES --target=$TARGET --verbose=1 )
+  if [[ $mode == unstow ]]; then
+    args+=( --delete )
+  elif (( $#EXCLUDED )); then
+    # Without --no-folding stow may link a whole folder and its excluded files with it.
+    args+=( --no-folding )
+    for f in $EXCLUDED; args+=( "--ignore=^/?$(re_escape $f)\$" )
+  fi
+
+  if ! plan=$(stow --simulate $args $pkg 2>&1); then
+    print -r -- $plan >&2
+    warn "stow cannot $mode $pkg (see above); nothing was changed"
+    return 1
+  fi
+  verify_plan $pkg $plan || { warn "$mode $pkg aborted; nothing was changed"; return 1 }
+
+  local -a actions=( ${(M)${(f)plan}:#(LINK|UNLINK|MKDIR|RMDIR)(:|) *} )
+  if (( ! $#actions )); then
+    info "$pkg: nothing to $mode"
+    return 0
+  fi
+  info "$mode ${BOLD}$pkg${RESET}"
+  print -rl -- "  "${^actions}
+  (( DRY_RUN )) && return 0
+  stow $args $pkg 2>&1 | grep -Ev '^(LINK|UNLINK|MKDIR|RMDIR):? ' >&2
+  (( ${pipestatus[1]} == 0 )) || { warn "stow failed for $pkg"; return 1 }
+}
+
+# Expands package arguments; --all means every package for this OS.
+expand_pkgs() {
+  typeset -ga PKGS=()
+  local p
+  for p in "$@"; do
+    if [[ $p == --all ]]; then
+      for p in $(all_packages); pkg_for_os $p && PKGS+=$p
+    else
+      check_pkg $p
+      PKGS+=$p
+    fi
+  done
+  (( $#PKGS )) || die "no packages given (name them or use --all)"
+}
+
+# ---------------------------------------------------------------------------
+# Commands
+# ---------------------------------------------------------------------------
+cmd_stow() {
+  expand_pkgs "$@"
+  local p failed=()
+  for p in $PKGS; do
+    if ! pkg_for_os $p; then warn "skipping $p (os = ${PKG_OS[$p]}, this is $OS)"; continue; fi
+    run_stow stow $p || failed+=$p
+  done
+  (( $#failed )) && die "failed: $failed"
+  return 0
+}
+
+cmd_unstow() {
+  expand_pkgs "$@"
+  local p failed=()
+  for p in $PKGS; run_stow unstow $p || failed+=$p
+  (( $#failed )) && die "failed: $failed"
+  return 0
+}
+
+# Unstow without rules (removes links to newly excluded files), then stow
+# with rules. The stow step is checked before anything is removed.
+cmd_restow() {
+  expand_pkgs "$@"
+  local p failed=()
+  for p in $PKGS; do
+    if ! pkg_for_os $p; then warn "skipping $p (os = ${PKG_OS[$p]}, this is $OS)"; continue; fi
+    if (( DRY_RUN )); then
+      run_stow unstow $p && run_stow stow $p || failed+=$p
+      continue
+    fi
+    DRY_RUN=1
+    if ! run_stow stow $p >/dev/null; then DRY_RUN=0; failed+=$p; continue; fi
+    DRY_RUN=0
+    run_stow unstow $p || { failed+=$p; continue }
+    run_stow stow $p || { warn "$p is now unstowed; fix the problem and run ./dot stow $p"; failed+=$p }
+  done
+  (( $#failed )) && die "failed: $failed"
+  return 0
+}
+
+cmd_adopt() {
+  local pkg=${1:-}
+  check_pkg_name $pkg
+  shift
+  (( $# )) || die "usage: ./dot adopt <package> <path>..."
+
+  if [[ -d $DOTFILES/$pkg && -n $(git -C $DOTFILES status --porcelain -- $pkg) ]]; then
+    die "$pkg has uncommitted changes; commit or stash them first"
+  fi
+
+  local p abs rel dest
+  local -a plan_new=() plan_replace=() plan_same=()
+  for p in "$@"; do
+    abs=${p:a}
+    [[ $abs == $TARGET/?* ]] || die "not under $TARGET: $p"
+    [[ -L $abs ]] && die "already a symlink: $p"
+    [[ -f $abs ]] || die "not a regular file: $p (adopt files one by one)"
+    [[ ${abs:A} == $abs ]] || die "path goes through a symlink (already managed?): $p"
+    rel=${abs#$TARGET/}
+    case $(file_rule $pkg $rel) in
+      excluded)     die "$rel is excluded by dot.conf rules for $pkg" ;;
+      stow-ignored) die "stow never links files named like '${rel:t}' (its default ignore list)" ;;
+    esac
+    dest=$DOTFILES/$pkg/$rel
+    if [[ -L $dest || ( -e $dest && ! -f $dest ) ]]; then
+      die "$pkg/$rel exists in the repository and is not a regular file"
+    elif [[ -f $dest ]]; then
+      if cmp -s $abs $dest; then plan_same+=$rel; else plan_replace+=$rel; fi
+    else
+      plan_new+=$rel
+    fi
+  done
+
+  local r
+  for r in $plan_new;     info "new:      $pkg/$r"
+  for r in $plan_replace; info "replace:  $pkg/$r (repository copy overwritten by ~/$r)"
+  for r in $plan_same;    info "identical: $pkg/$r"
+  (( DRY_RUN )) && return 0
+
+  # Move the files into the repository; undo everything if stow fails.
+  for r in $plan_new; do
+    mkdir -p ${${:-$DOTFILES/$pkg/$r}:h} && mv -- $TARGET/$r $DOTFILES/$pkg/$r || die "could not move ~/$r"
+  done
+  for r in $plan_replace $plan_same; do
+    cp -p -- $TARGET/$r $DOTFILES/$pkg/$r && rm -- $TARGET/$r || die "could not adopt ~/$r"
+  done
+
+  if ! run_stow stow $pkg; then
+    warn "linking failed; putting the files back"
+    for r in $plan_new; mv -- $DOTFILES/$pkg/$r $TARGET/$r
+    for r in $plan_replace $plan_same; do
+      cp -p -- $DOTFILES/$pkg/$r $TARGET/$r && git -C $DOTFILES restore -- $pkg/$r
+    done
+    exit 1
+  fi
+
+  print
+  info "review, then commit:"
+  git -C $DOTFILES status --short -- $pkg
+  git -C $DOTFILES --no-pager diff --stat -- $pkg
+}
+
+cmd_status() {
+  local -a pkgs
+  local p
+  if (( $# )); then
+    for p in "$@"; check_pkg $p
+    pkgs=( "$@" ) VERBOSE=1
+  else
+    pkgs=( $(all_packages) )
+  fi
+
+  printf "${BOLD}%-13s %-6s %-11s %s${RESET}\n" PACKAGE OS STATE DETAILS
+  local p f st color state
+  for p in $pkgs; do
+    if ! pkg_for_os $p; then
+      printf "%-13s %-6s ${YELLOW}%-11s${RESET} %s\n" $p ${PKG_OS[$p]:-all} skipped "not for $OS"
+      continue
+    fi
+    select_files $p
+    local -A count=( linked 0 missing 0 blocked 0 elsewhere 0 )
+    local -a lines=() stale=()
+    for f in $WANTED; do
+      st=$(file_state $p $f)
+      (( count[$st]++ ))
+      case $st in
+        linked)     lines+="  ${GREEN}linked${RESET}        $f" ;;
+        missing)    lines+="  ${RED}missing${RESET}       $f  (not stowed)" ;;
+        blocked)    lines+="  ${RED}blocked${RESET}       $f  (a real file is in the way)" ;;
+        elsewhere)  lines+="  ${RED}other link${RESET}    $f  (~/$f links somewhere else)" ;;
+      esac
+    done
+    for f in $EXCLUDED; do
+      [[ $(file_state $p $f) == linked ]] && stale+=$f
+      lines+="  ${YELLOW}excluded${RESET}      $f  (dot.conf)"
+    done
+    for f in $STOW_IGNORED; lines+="  ${YELLOW}stow-ignored${RESET}  $f  (stow's default ignore list)"
+    for f in $stale; lines+="  ${RED}stale${RESET}         $f  (excluded but still linked: run ./dot restow $p)"
+
+    if (( $#WANTED && count[linked] == $#WANTED )); then state=stowed color=$GREEN
+    elif (( count[linked] == 0 && count[blocked] == 0 && count[elsewhere] == 0 )); then state="not stowed" color=$RED
+    else state=partial color=$YELLOW
+    fi
+    (( $#stale )) && state=stale color=$RED
+
+    local -a details=()
+    (( $#WANTED && count[linked] != $#WANTED )) && details+="${count[linked]}/$#WANTED linked"
+    (( count[blocked] ))    && details+="${count[blocked]} blocked"
+    (( count[elsewhere] ))  && details+="${count[elsewhere]} linked elsewhere"
+    (( $#stale ))           && details+="$#stale stale"
+    (( $#EXCLUDED ))        && details+="$#EXCLUDED excluded"
+    (( $#STOW_IGNORED ))    && details+="$#STOW_IGNORED stow-ignored"
+    printf "%-13s %-6s ${color}%-11s${RESET} %s\n" $p ${PKG_OS[$p]:-all} $state "${(j:, :)details}"
+    (( VERBOSE )) && print -rl -- $lines
+  done
+  return 0
+}
+
+cmd_help() {
+  cat <<EOF
+${BOLD}dot${RESET}: GNU Stow wrapper for ~/.dotfiles (rules in dot.conf)
+
+${BOLD}Commands${RESET}
+  ./dot status [pkg...]        Overview; with package names, every file and why
+  ./dot stow <pkg...|--all>    Link packages (--all: every package for this OS)
+  ./dot unstow <pkg...|--all>  Remove a package's links
+  ./dot restow <pkg...|--all>  Unstow, then stow with the current rules
+  ./dot adopt <pkg> <file...>  Move files from ~ into a package and link them back
+
+${BOLD}Options${RESET}
+  -n, --dry-run   Show the plan only; change nothing
+  -v, --verbose   status: list every file
+
+Every change is simulated and checked first: links must point into the
+named package, and files excluded in dot.conf are never linked.
+EOF
+}
+
+main() {
+  (( $+commands[stow] )) || die "GNU Stow is not installed (brew install stow)"
+  local -a args=()
+  local a
+  for a in "$@"; do
+    case $a in
+      -n|--dry-run) DRY_RUN=1 ;;
+      -v|--verbose) VERBOSE=1 ;;
+      *) args+=( "$a" ) ;;
+    esac
+  done
+  parse_conf
+  local cmd=${args[1]:-help}
+  args=( "${(@)args[2,-1]}" )
+  case $cmd in
+    status) cmd_status "${(@)args}" ;;
+    stow)   cmd_stow "${(@)args}" ;;
+    unstow) cmd_unstow "${(@)args}" ;;
+    restow) cmd_restow "${(@)args}" ;;
+    adopt)  cmd_adopt "${(@)args}" ;;
+    help|-h|--help) cmd_help ;;
+    *) die "unknown command: $cmd (see ./dot help)" ;;
+  esac
+}
+
+# Run only when executed, not when sourced (tests source this file).
+[[ $ZSH_EVAL_CONTEXT == toplevel ]] && main "$@"
