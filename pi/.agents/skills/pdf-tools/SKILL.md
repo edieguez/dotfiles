@@ -36,6 +36,9 @@ offer `brew install poppler`.
 - For more than about 100 pages, delegate chapters to subagents or parallel
   `pi -p` runs, each writing its findings to a file, and merge the results.
 - Rendering many pages is expensive: render only the pages you need.
+- Delegated runs over many images skip pages silently. Ask them to cite
+  the page of each table or figure, then check every rendered page is
+  cited (or explicitly ruled out) and re-run the missing ones.
 
 ## Notes
 
