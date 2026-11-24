@@ -29,7 +29,9 @@ These stay only in `~/.pi/agent/` because they are secret, personal or
 generated: `auth.json`, `sessions/`, `memory/`, `models-store.json`, `npm/`.
 The root `.gitignore` also excludes them in case they end up in the package.
 
-Skills live in `~/.agents/skills/`, outside this package:
+Skills live in `~/.agents/skills/`. This package versions `pdf-tools`
+(`.agents/skills/pdf-tools`, stowed as a link): it reads PDFs with poppler
+(`brew install poppler`), including pages rendered as images. Not versioned:
 
 - `rex`: a stub installed by `rex skill setup`; reinstall it with that
   command.
