@@ -1,6 +1,6 @@
 {
-  "defaultProvider": "anthropic",
-  "defaultModel": "claude-opus-5-5",
+  "defaultProvider": "router",
+  "defaultModel": "auto",
   "defaultTools": [
     "+codemode"
   ],

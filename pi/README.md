@@ -5,8 +5,8 @@ Configuration for the [Pi coding agent](https://pi.dev), stowed into
 
 ## Contents
 
-- `settings.json`: default model, tools (`+codemode`) and packages
-  (`pi-memory`, installed automatically by Pi at startup).
+- `settings.json`: default model (`router/auto`), tools (`+codemode`) and
+  packages (`pi-memory`, installed automatically by Pi at startup).
 - `AGENTS.md`: user-wide instructions (Markdown rules, classifier choice).
 - `mcp.json`: MCP servers. Credentials are not stored here.
 - `extensions/`:
