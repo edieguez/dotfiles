@@ -8,6 +8,7 @@ Usage:
   pdf.sh info FILE
   pdf.sh text FILE [FIRST [LAST]] [--raw]
   pdf.sh image-pages FILE [FIRST [LAST]]
+  pdf.sh captions FILE [FIRST [LAST]]
   pdf.sh render FILE FIRST LAST OUTDIR [DPI]
 USAGE
   exit 2
@@ -44,6 +45,14 @@ case $cmd in
           words=$(pdftotext -f "$page" -l "$page" "$file" - | wc -w | tr -d ' ')
           printf '%s\t%s\t%s\n' "$page" "$count" "$words"
         done
+    ;;
+  captions)
+    need pdftotext
+    first=${3:-1}; last=${4:-$(pages "$file")}
+    printf 'page\tcaption\n'
+    # pdftotext separates pages with form feeds; count them to number pages.
+    pdftotext -f "$first" -l "$last" "$file" - \
+      | awk -v p="$first" '{ p += gsub(/\f/, ""); if (match($0, /^[[:space:]]*(Tabla|Table|Figura|Figure|Fig\.) ?[0-9]+[.:]/)) { s = $0; sub(/^[[:space:]]+/, "", s); print p "\t" s } }'
     ;;
   render)
     need pdftoppm

@@ -28,6 +28,8 @@ offer `brew install poppler`.
    (default 100 DPI), then `read` each PNG. Use 150 DPI for small print.
    To render only an image instead of the whole page, use
    `pdfimages -png -f N -l N file.pdf /tmp/prefix`.
+5. List table and figure captions per page (Tabla, Table, Figura, Figure):
+   `scripts/pdf.sh captions file.pdf [FIRST LAST]`.
 
 ## Large documents
 
@@ -39,6 +41,14 @@ offer `brew install poppler`.
 - Delegated runs over many images skip pages silently. Ask them to cite
   the page of each table or figure, then check every rendered page is
   cited (or explicitly ruled out) and re-run the missing ones.
+- Page numbers cited from images are often wrong (typically off by one),
+  and figure numbers sometimes too. Before linking or showing a page,
+  check it with `scripts/pdf.sh captions file.pdf [FIRST LAST]`: the page
+  must hold a caption with the same number or title. Otherwise use the
+  nearby page whose caption matches, and check unclear cases visually.
+- When content refers to a table or figure, show the user the rendered
+  page (or the image) next to it; a description alone is not enough to
+  answer questions about it.
 
 ## Notes
 
