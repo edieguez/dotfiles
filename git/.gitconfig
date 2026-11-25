@@ -24,7 +24,6 @@
 	defaultRemote = origin
 
 [core]
-	excludesfile = ~/.gitignore
 	editor = nvim
 	pager = delta
 

@@ -1,0 +1,3 @@
+# Global git ignore (git's default location, ~/.config/git/ignore)
+.DS_Store
+.claude/
