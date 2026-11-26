@@ -17,8 +17,11 @@ Configuration for the [Pi coding agent](https://pi.dev), stowed into
   - `status-footer.ts`: clearer footer with classifier activity (`/footer`).
   - `model-router.ts`: `router/auto` picks Opus, Sonnet or Copilot per task
     with the free classifier; `/route` forces a level.
-  - `plan-mode`, `subagent`: links to Pi's bundled examples (Homebrew).
-- `agents/`, `prompts/`: links to the subagent example's agents and prompts.
+  - `plan-mode`, `subagent`: copies of Pi's bundled examples (not links, so
+    they work wherever Pi is installed; refresh them by hand after major Pi
+    upgrades).
+- `agents/`, `prompts/`: the subagent example's agents and prompts (copies).
+- `bootstrap.sh`: sets up a new machine (see below).
 - `prompts/commit.md`, `prompts/review.md`: `/commit` proposes a commit in
   the repository's style and commits only after approval (never pushes);
   `/review` reviews uncommitted changes or a range without editing.
@@ -41,10 +44,12 @@ Skills live in `~/.agents/skills/`. This package versions `pdf-tools`
 ## Setup on a new machine
 
 ```sh
-brew install pi-coding-agent
-cd ~/.dotfiles && stow pi
-pi auth login openrouter --api-key   # classifiers
-pi auth login radius                 # MCP server and web search
+brew install pi-coding-agent stow jq
+cd ~/.dotfiles && pi/bootstrap.sh    # stow, git filter, login check
+pi auth login anthropic              # required
+pi auth login openrouter --api-key   # optional: router classifier
+pi auth login github-copilot         # optional: router "easy" tier
+pi auth login radius                 # optional: MCP server and web search
 rex skill setup                      # Rex skill for agents (optional)
 ```
 
@@ -55,10 +60,4 @@ repository. Review them with `git diff` before committing.
 Pi also records its own version fields in `settings.json`
 (`lastChangelogVersion`, `extensionChangelogVersions`). A git filter in the
 root `.gitattributes` leaves them out of diffs and commits; the file on disk
-keeps them. The filter is not versioned, so set it up once per clone:
-
-```sh
-git config filter.pi-settings.clean \
-  "jq 'del(.lastChangelogVersion, .extensionChangelogVersions)'"
-git config filter.pi-settings.smudge cat
-```
+keeps them. The filter itself is not versioned, and `bootstrap.sh` sets it up.
