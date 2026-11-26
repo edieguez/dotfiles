@@ -40,6 +40,6 @@ for provider in anthropic github-copilot openrouter radius; do
     say "  missing  $provider -> $hint"
   fi
 done
-say "  (anthropic is required; the others are optional, see README.md)"
+say "  (at least one model provider is needed; see README.md for what each adds)"
 
 say "Done."

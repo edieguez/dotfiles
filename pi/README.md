@@ -5,7 +5,8 @@ Configuration for the [Pi coding agent](https://pi.dev), stowed into
 
 ## Contents
 
-- `settings.json`: default model (`router/auto`), tools (`+codemode`) and
+- `settings.json`: default model (`router/auto`), tools (`+codemode`),
+  `/share` destination (`auto`: Radius when logged in, otherwise a gist) and
   packages (`pi-memory`, installed automatically by Pi at startup).
 - `AGENTS.md`: user-wide instructions (Markdown rules, classifier choice).
 - `mcp.json`: MCP servers. Credentials are not stored here.
@@ -15,8 +16,13 @@ Configuration for the [Pi coding agent](https://pi.dev), stowed into
     `node_modules/`.
   - `git-checkpoint.ts`: restores code when using `/fork`.
   - `status-footer.ts`: clearer footer with classifier activity (`/footer`).
-  - `model-router.ts`: `router/auto` picks Opus, Sonnet or Copilot per task
-    with the free classifier; `/route` forces a level.
+  - `model-router/`: `router/auto` picks a model per task (easy, medium,
+    hard) with the free classifier; `/route` forces a level. Models,
+    classifier and private folders are in `model-router/config.json`; a
+    machine can override them in `~/.pi/agent/model-router.json` (not
+    versioned, e.g. `{ "tiers": { "easy": ["anthropic/claude-haiku-5-5"] } }`).
+    Tiers without credentials fall back to other tiers, then to any logged-in
+    model, so the default `router/auto` works with any provider.
   - `plan-mode`, `subagent`: copies of Pi's bundled examples (not links, so
     they work wherever Pi is installed; refresh them by hand after major Pi
     upgrades).
@@ -46,7 +52,7 @@ Skills live in `~/.agents/skills/`. This package versions `pdf-tools`
 ```sh
 brew install pi-coding-agent stow jq
 cd ~/.dotfiles && pi/bootstrap.sh    # stow, git filter, login check
-pi auth login anthropic              # required
+pi auth login anthropic              # main models (any provider works)
 pi auth login openrouter --api-key   # optional: router classifier
 pi auth login github-copilot         # optional: router "easy" tier
 pi auth login radius                 # optional: MCP server and web search

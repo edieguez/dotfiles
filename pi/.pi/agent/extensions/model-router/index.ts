@@ -2,10 +2,17 @@
  * Model Router: virtual model `router/auto` that picks a model per task with
  * a classifier (based on pi's examples/extensions/jev-router.ts).
  *
- *   hard   -> anthropic/claude-opus-5-5
- *   medium -> anthropic/claude-sonnet-5-5
- *   easy   -> github-copilot/claude-sonnet-4.6
+ * Models, classifier and private folders live in `config.json` next to this
+ * file (versioned). A machine can override any top-level key, or single tiers,
+ * in `~/.pi/agent/model-router.json` (not versioned), e.g.
+ *   { "tiers": { "easy": ["anthropic/claude-haiku-5-5"] } }
  *
+ * - Each tier is a list of `provider/model`; the first one with credentials
+ *   wins. When a tier has none, the router tries the tiers above, then the
+ *   ones below, then any model with credentials, so it works on a machine with
+ *   other logins (it only fails when there are no logins at all).
+ * - Without credentials for the classifier provider, the router skips the
+ *   classifier and uses the medium tier.
  * - The free Perplexity Decider rates each new user message. Below 60%
  *   certainty the router takes the highest level with at least a 40% chance
  *   of being needed (unsure between easy and medium -> medium, not hard).
@@ -25,16 +32,23 @@
  *   Session state is saved only when the level (or forced mode) changes.
  *
  * Settings (environment variables):
- *   PI_ROUTER_PRIVATE  colon-separated private folders (default ~/Documents/journal)
+ *   PI_ROUTER_PRIVATE  colon-separated private folders (overrides `private`)
  *
  * Usage: /model router/auto
  */
 
-import { realpathSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, join, resolve, sep } from "node:path";
-import type { Message } from "@earendil-works/pi-ai";
-import type { ExtensionAPI, ExtensionContext, ModelRoute, ModelRouteRequest } from "@earendil-works/pi-coding-agent";
+import { fileURLToPath } from "node:url";
+import type { Api, Message, Model } from "@earendil-works/pi-ai";
+import {
+	type ExtensionAPI,
+	type ExtensionContext,
+	getAgentDir,
+	type ModelRoute,
+	type ModelRouteRequest,
+} from "@earendil-works/pi-coding-agent";
 
 type Tier = "easy" | "medium" | "hard";
 type Source = "classifier" | "unsure" | "private" | "fallback" | "forced" | "sticky";
@@ -47,16 +61,55 @@ interface RouterState {
 }
 
 const ORDER: Tier[] = ["easy", "medium", "hard"];
-/** Models per tier, first available wins. */
-const MODELS: Record<Tier, [string, string][]> = {
-	hard: [["anthropic", "claude-opus-5-5"]],
-	medium: [["anthropic", "claude-sonnet-5-5"]],
-	easy: [
-		["github-copilot", "claude-sonnet-4.6"],
-		["anthropic", "claude-haiku-5-5"],
-	],
-};
-const CLASSIFIER: [string, string] = ["openrouter", "perplexity/pplx-decider-v1.3:free"];
+
+interface RouterConfig {
+	/** `provider/model` refs per tier, first one with credentials wins. */
+	tiers: Record<Tier, string[]>;
+	/** `provider/model` of the classifier (the model ID may contain slashes). */
+	classifier?: string;
+	/** Folders that never call the classifier (`~/` allowed). */
+	private: string[];
+}
+
+const CONFIG_FILE = join(dirname(fileURLToPath(import.meta.url)), "config.json");
+const LOCAL_FILE = join(getAgentDir(), "model-router.json");
+
+/**
+ * Reads config.json and merges the local override over it (top-level keys
+ * replace, `tiers` merges per tier). Errors are collected, not thrown, so a bad
+ * file degrades to "any model with credentials" instead of breaking Pi.
+ */
+export function loadConfig(files = [CONFIG_FILE, LOCAL_FILE]): { config: RouterConfig; errors: string[] } {
+	const config: RouterConfig = { tiers: { easy: [], medium: [], hard: [] }, private: [] };
+	const errors: string[] = [];
+	for (const file of files) {
+		if (file !== files[0] && !existsSync(file)) continue;
+		try {
+			const data = JSON.parse(readFileSync(file, "utf8")) as Partial<RouterConfig>;
+			for (const tier of ORDER) {
+				const list = data.tiers?.[tier];
+				if (list !== undefined) {
+					if (Array.isArray(list) && list.every((r) => typeof r === "string")) config.tiers[tier] = list;
+					else errors.push(`${file}: tiers.${tier} must be a list of "provider/model"`);
+				}
+			}
+			if ("classifier" in data) config.classifier = data.classifier || undefined;
+			if (Array.isArray(data.private)) config.private = data.private;
+		} catch (err) {
+			errors.push(`${file}: ${(err as Error).message}`);
+		}
+	}
+	return { config, errors };
+}
+
+/** "openrouter/perplexity/x:free" -> ["openrouter", "perplexity/x:free"] */
+export function splitRef(ref: string): [string, string] | undefined {
+	const i = ref.indexOf("/");
+	return i > 0 && i < ref.length - 1 ? [ref.slice(0, i), ref.slice(i + 1)] : undefined;
+}
+
+const { config: CONFIG, errors: CONFIG_ERRORS } = loadConfig();
+const CLASSIFIER = CONFIG.classifier ? splitRef(CONFIG.classifier) : undefined;
 const MIN_CERTAINTY = 0.6;
 /** When unsure: the highest level whose "this level or harder" probability reaches this. */
 const AT_LEAST = 0.4;
@@ -66,8 +119,7 @@ const RETRY_DELAY_MS = 1_000;
 const FALLBACK: Tier = "medium";
 
 const HOME = homedir();
-const PRIVATE = (process.env.PI_ROUTER_PRIVATE || `${HOME}/Documents/journal`)
-	.split(":")
+const PRIVATE = (process.env.PI_ROUTER_PRIVATE ? process.env.PI_ROUTER_PRIVATE.split(":") : CONFIG.private)
 	.filter(Boolean)
 	.map((p) => resolve(p.startsWith("~/") ? HOME + p.slice(1) : p));
 
@@ -94,7 +146,11 @@ export function isPrivate(cwd: string): boolean {
 }
 
 const higher = (a: Tier, b: Tier): Tier => (ORDER.indexOf(a) >= ORDER.indexOf(b) ? a : b);
-const up = (t: Tier): Tier => ORDER[Math.min(ORDER.length - 1, ORDER.indexOf(t) + 1)];
+/** Tiers to try for a level: itself, the ones above (closest first), then the ones below. */
+export function fallbackTiers(t: Tier): Tier[] {
+	const i = ORDER.indexOf(t);
+	return [t, ...ORDER.slice(i + 1), ...ORDER.slice(0, i).reverse()];
+}
 
 /**
  * Level for a classifier answer. Confident answers are used as they are; when
@@ -133,17 +189,28 @@ export default function (pi: ExtensionAPI) {
 	let pending: Tier | "auto" | undefined;
 	let callCount = 0;
 
-	function pick(ctx: ExtensionContext, tier: Tier) {
-		for (const [provider, id] of MODELS[tier]) {
-			const model = ctx.modelRegistry.find(provider, id);
-			if (model && ctx.modelRegistry.hasConfiguredAuth(model)) return model;
+	let warned = false;
+	function warnOnce(ctx: ExtensionContext, message: string) {
+		if (warned || !ctx.hasUI) return;
+		warned = true;
+		ctx.ui.notify(`model-router: ${message}`, "warning");
+	}
+
+	function pick(ctx: ExtensionContext, tier: Tier): Model<Api> {
+		for (const t of fallbackTiers(tier)) {
+			for (const ref of CONFIG.tiers[t]) {
+				const [provider, id] = splitRef(ref) ?? [];
+				const model = provider && id ? ctx.modelRegistry.find(provider, id) : undefined;
+				if (model && ctx.modelRegistry.hasConfiguredAuth(model)) return model;
+			}
 		}
-		// Last resort: any tier above, then the hard model even without a check.
-		if (tier !== "hard") return pick(ctx, up(tier));
-		const [p, id] = MODELS.hard[0];
-		const model = ctx.modelRegistry.find(p, id);
-		if (!model) throw new Error(`model-router: ${p}/${id} is not in the catalog`);
-		return model;
+		// No configured model is usable on this machine: any model with credentials.
+		const any = ctx.modelRegistry.getAvailable().find((m) => m.provider !== "router");
+		if (any) {
+			warnOnce(ctx, `no model in config.json has credentials here; using ${any.provider}/${any.id}`);
+			return any;
+		}
+		throw new Error("model-router: no model has credentials; log in with `pi auth login <provider>`");
 	}
 
 	function showStatus(ctx: ExtensionContext, state: RouterState, modelId: string) {
@@ -154,6 +221,9 @@ export default function (pi: ExtensionAPI) {
 	}
 
 	async function classify(request: ModelRouteRequest<RouterState>, ctx: ExtensionContext): Promise<RouterState> {
+		if (!CLASSIFIER || !ctx.modelRegistry.getProviderAuthStatus(CLASSIFIER[0]).configured) {
+			return { tier: FALLBACK, source: "fallback" };
+		}
 		const model = ctx.modelRegistry.findOfType("classifier", CLASSIFIER[0], CLASSIFIER[1]);
 		if (!model) return { tier: FALLBACK, source: "fallback" };
 		const id = `model-router/${++callCount}`;
@@ -216,13 +286,14 @@ export default function (pi: ExtensionAPI) {
 			// Compaction summaries and other direct requests: the medium model.
 			if (request.reason === "direct") return { model: pick(ctx, "medium"), thinkingLevel: level };
 
-			// Retries stay on the failed model, except Copilot failures move to Anthropic.
+			// Retries stay on the failed model, except failures on another provider
+			// than the medium model's (e.g. Copilot) move to the medium model.
 			if (request.reason === "retry" && request.failed) {
-				if (request.failed.model.provider === "github-copilot") {
+				const medium = pick(ctx, "medium");
+				if (request.failed.model.provider !== medium.provider) {
 					const state: RouterState = { tier: "medium", source: "fallback" };
-					const model = pick(ctx, "medium");
-					showStatus(ctx, state, model.id);
-					return { model, thinkingLevel: level, state };
+					showStatus(ctx, state, medium.id);
+					return { model: medium, thinkingLevel: level, state };
 				}
 				return { model: request.failed.model, thinkingLevel: request.failed.thinkingLevel ?? level };
 			}
@@ -259,6 +330,12 @@ export default function (pi: ExtensionAPI) {
 			showStatus(ctx, next, model.id);
 			return { model, thinkingLevel: level, ...(worthSaving(current, next) ? { state: next } : {}) };
 		},
+	});
+
+	pi.on("session_start", async (_event, ctx) => {
+		if (CONFIG_ERRORS.length && ctx.hasUI) {
+			ctx.ui.notify(`model-router config: ${CONFIG_ERRORS.join("; ")}`, "warning");
+		}
 	});
 
 	pi.registerCommand("route", {

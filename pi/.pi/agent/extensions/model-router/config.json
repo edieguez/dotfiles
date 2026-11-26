@@ -1,0 +1,9 @@
+{
+  "tiers": {
+    "hard": ["anthropic/claude-opus-5-5"],
+    "medium": ["anthropic/claude-sonnet-5-5"],
+    "easy": ["github-copilot/claude-sonnet-4.6", "anthropic/claude-haiku-5-5"]
+  },
+  "classifier": "openrouter/perplexity/pplx-decider-v1.3:free",
+  "private": ["~/Documents/journal"]
+}

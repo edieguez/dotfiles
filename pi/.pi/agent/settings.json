@@ -7,7 +7,7 @@
   "packages": [
     "npm:pi-memory"
   ],
-  "sessionShareDestination": "radius",
+  "sessionShareDestination": "auto",
   "enableInstallTelemetry": false,
   "collapseChangelog": true,
   "terminal": {

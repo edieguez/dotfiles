@@ -21,7 +21,7 @@
  * `/footer` switches between this footer and the built-in one.
  * Classifier calls made directly by extensions are shown when the extension
  * reports them on pi.events (`classifier:start` / `classifier:end`), as
- * model-router.ts does; other direct calls are not visible.
+ * model-router does; other direct calls are not visible.
  */
 
 import { readFileSync } from "node:fs";
