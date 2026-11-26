@@ -53,8 +53,7 @@
   Use it for all `models.classify()` calls unless told otherwise.
 - `openrouter/typesafe/jev-1.14` is paid (OpenRouter credits, limited PoC
   budget). Use it only when the user explicitly asks for Jev.
-- Free models may log requests: do not send private journal content
-  (`~/Documents/journal`) to them without asking; suggest Jev for sensitive
-  data.
+- Free models may log requests: ask before sending sensitive data
+  (credentials, health, finances) to them; suggest Jev for it.
 - If the free model is rate-limited, slow down or ask before falling back to
   Jev.

@@ -18,9 +18,10 @@
  *   of being needed (unsure between easy and medium -> medium, not hard).
  * - A failed classifier call (e.g. 429 rate limit) is retried once after 1 s;
  *   if it fails again, the task goes to the medium model.
- * - Private folders (default: ~/Documents/journal) never call the classifier
- *   and use the hard model, so private text is not sent to a free model.
- *   Symlinks are resolved, so a journal opened through a link counts too.
+ * - Private folders (`private` in config.json, none by default) never call
+ *   the classifier and use the hard model, so private text is not sent to a
+ *   free model. Symlinks are resolved, so a folder opened through a link
+ *   counts too.
  * - Tool follow-ups and retries stay on the model that handled the turn
  *   (keeps the prompt cache). Within a session the level only goes up; start a
  *   new session or use `/route` to go down.
